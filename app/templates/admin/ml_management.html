@@ -1,0 +1,254 @@
+{% extends "admin/base.html" %}
+
+{% block title %}ML Model Management - SecureTrainer{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">ML Model Management</h1>
+                <p class="text-gray-600 mt-2">Train and manage the challenge difficulty prediction model</p>
+            </div>
+            <a href="{{ url_for('admin.admin_dashboard') }}"
+                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Model Status Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-robot mr-2 text-blue-600"></i> Model Status
+            </h2>
+            <div id="model-status" class="space-y-3">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="ml-3 text-gray-600">Loading model status...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-cogs mr-2 text-green-600"></i> Training Actions
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Export Data -->
+                <button onclick="exportData()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md transition flex items-center justify-center">
+                    <i class="fas fa-database mr-2"></i> Export Training Data
+                </button>
+
+                <!-- Train Model -->
+                <button onclick="trainModel()"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md transition flex items-center justify-center">
+                    <i class="fas fa-brain mr-2"></i> Train Model
+                </button>
+
+                <!-- Retrain (Full Pipeline) -->
+                <button onclick="retrainModel()"
+                    class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-md transition flex items-center justify-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Full Retrain
+                </button>
+            </div>
+        </div>
+
+        <!-- Metrics Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-chart-line mr-2 text-purple-600"></i> Model Metrics
+            </h2>
+            <div id="model-metrics" class="text-gray-600">
+                <p>Load model status to view metrics</p>
+            </div>
+        </div>
+
+        <!-- Output Console -->
+        <div class="bg-gray-900 rounded-lg shadow-md p-6 mt-6" id="console-container" style="display: none;">
+            <h2 class="text-xl font-semibold mb-4 text-white flex items-center">
+                <i class="fas fa-terminal mr-2"></i> Console Output
+            </h2>
+            <div id="console-output"
+                class="bg-black text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto whitespace-pre-wrap">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load model status on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        loadModelStatus();
+    });
+
+    async function loadModelStatus() {
+        try {
+            const response = await fetch('/api/ml/status');
+            const data = await response.json();
+
+            const statusDiv = document.getElementById('model-status');
+
+            if (data.success && data.model_exists) {
+                const info = data.model_info;
+                const lastModified = new Date(info.last_modified).toLocaleString();
+                const trainingDate = info.training_date ? new Date(info.training_date).toLocaleString() : 'Unknown';
+
+                statusDiv.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-green-50 border border-green-200 rounded p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                            <span class="font-semibold text-green-800">Model Active</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Accuracy: <span class="font-bold">${(info.accuracy * 100).toFixed(2)}%</span></p>
+                        <p class="text-sm text-gray-600">Training Samples: <span class="font-bold">${info.training_samples}</span></p>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-clock text-blue-600 mr-2"></i>
+                            <span class="font-semibold text-blue-800">Last Updated</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Modified: <span class="font-bold">${lastModified}</span></p>
+                        <p class="text-sm text-gray-600">Trained: <span class="font-bold">${trainingDate}</span></p>
+                    </div>
+                </div>
+            `;
+
+                // Load metrics
+                loadMetrics();
+            } else {
+                statusDiv.innerHTML = `
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
+                        <span class="font-semibold text-yellow-800">No Model Found</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">Train a model to enable AI-powered difficulty prediction</p>
+                </div>
+            `;
+            }
+        } catch (error) {
+            console.error('Error loading model status:', error);
+            document.getElementById('model-status').innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-times-circle text-red-600 mr-2"></i>
+                    <span class="font-semibold text-red-800">Error Loading Status</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">${error.message}</p>
+            </div>
+        `;
+        }
+    }
+
+    async function loadMetrics() {
+        try {
+            const response = await fetch('/api/ml/metrics');
+            const data = await response.json();
+
+            if (data.success) {
+                const metrics = data.metrics;
+                const metricsDiv = document.getElementById('model-metrics');
+
+                // Display feature importance
+                let featureHtml = '<h3 class="font-semibold mb-2">Top Features:</h3><ul class="space-y-1">';
+                const features = Object.entries(metrics.feature_importance || {})
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                features.forEach(([name, importance]) => {
+                    featureHtml += `<li class="text-sm"><span class="font-medium">${name}:</span> ${(importance * 100).toFixed(2)}%</li>`;
+                });
+                featureHtml += '</ul>';
+
+                metricsDiv.innerHTML = featureHtml;
+            }
+        } catch (error) {
+            console.error('Error loading metrics:', error);
+        }
+    }
+
+    function showConsole(output) {
+        const consoleContainer = document.getElementById('console-container');
+        const consoleOutput = document.getElementById('console-output');
+        consoleContainer.style.display = 'block';
+        consoleOutput.textContent = output;
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    async function exportData() {
+        if (!confirm('Export training data from MongoDB? This may take a few minutes.')) return;
+
+        showConsole('Starting data export...\n');
+
+        try {
+            const response = await fetch('/api/ml/export-data', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                showConsole(data.output);
+                alert('✅ Data exported successfully!');
+            } else {
+                showConsole(data.output || data.error);
+                alert('❌ Export failed: ' + data.error);
+            }
+        } catch (error) {
+            showConsole('Error: ' + error.message);
+            alert('❌ Export failed: ' + error.message);
+        }
+    }
+
+    async function trainModel() {
+        if (!confirm('Train new model? This will replace the existing model and may take 5-10 minutes.')) return;
+
+        showConsole('Starting model training...\n');
+
+        try {
+            const response = await fetch('/api/ml/train', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                showConsole(data.output);
+                alert('✅ Model trained successfully!');
+                loadModelStatus();
+            } else {
+                showConsole(data.output || data.error);
+                alert('❌ Training failed: ' + data.error);
+            }
+        } catch (error) {
+            showConsole('Error: ' + error.message);
+            alert('❌ Training failed: ' + error.message);
+        }
+    }
+
+    async function retrainModel() {
+        if (!confirm('Run full retraining pipeline? This will export data and train a new model (10-15 minutes).')) return;
+
+        showConsole('Starting full retraining pipeline...\n');
+
+        try {
+            const response = await fetch('/api/ml/retrain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ force: true })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showConsole(data.output);
+                alert('✅ Retraining completed successfully!');
+                loadModelStatus();
+            } else {
+                showConsole(data.output || data.error);
+                alert('❌ Retraining failed: ' + data.error);
+            }
+        } catch (error) {
+            showConsole('Error: ' + error.message);
+            alert('❌ Retraining failed: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

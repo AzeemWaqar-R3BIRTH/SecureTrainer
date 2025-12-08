@@ -1,0 +1,48 @@
+/* CRITICAL FIX: Force hint text to display fully without truncation */
+
+/* Target hint text element specifically */
+#hint-text,
+.hint-text,
+[id*="hint"] p,
+[class*="hint"] p {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    display: block !important;
+    max-height: none !important;
+    height: auto !important;
+    max-width: 100% !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    -webkit-box-orient: unset !important;
+}
+
+/* Force hint display container to not constrain */
+#hint-display,
+.hint-display,
+[id*="hint-display"] {
+    overflow: visible !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+/* Remove Tailwind truncate class effects if applied */
+.truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: pre-wrap !important;
+}
+
+/* Ensure all text within hint containers wraps properly */
+#hint-display *,
+.hint-display *,
+[id*="hint"] * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+}

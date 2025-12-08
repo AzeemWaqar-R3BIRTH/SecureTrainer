@@ -1,0 +1,2384 @@
+{% extends 'base.html' %}
+
+{% block title %}Learning Center - SecureTrainer{% endblock %}
+
+{% block content %}
+<div class="learning-center-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="hero-icon">🎓</span>
+                    Learning Center
+                </h1>
+                <p class="hero-subtitle">Master cybersecurity through interactive learning, hands-on challenges, and
+                    expert guidance</p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-progress">25%</div>
+                        <div class="stat-label">Overall Progress</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completed-modules">3</div>
+                        <div class="stat-label">Modules Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="study-time">2.5h</div>
+                        <div class="stat-label">Study Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="current-streak">5</div>
+                        <div class="stat-label">Day Streak</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="learning-illustration">
+                    <div class="cyber-shield">
+                        <div class="shield-icon">🛡️</div>
+                        <div class="shield-glow"></div>
+                    </div>
+                    <div class="floating-elements">
+                        <div class="element element-1">🔐</div>
+                        <div class="element element-2">💻</div>
+                        <div class="element element-3">🔍</div>
+                        <div class="element element-4">⚡</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Toggle -->
+    <div class="mobile-sidebar-toggle">
+        <button id="sidebar-toggle" class="sidebar-toggle-btn">
+            <i class="fas fa-bars"></i>
+            <span>Menu</span>
+        </button>
+    </div>
+
+    <!-- Main Learning Interface -->
+    <div class="learning-interface">
+        <!-- Sidebar Navigation -->
+        <aside class="learning-sidebar" id="learning-sidebar">
+            <!-- Mobile Close Button -->
+            <button class="sidebar-close-btn" id="sidebar-close">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Search Box -->
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search courses, topics, or concepts..." id="content-search"
+                        class="search-input">
+                    <button class="search-clear" id="search-clear" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="search-results" class="search-results" style="display: none;">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="learning-nav">
+                <div class="nav-header">
+                    <h3>Learning Modules</h3>
+                    <div class="nav-progress">
+                        <span id="nav-progress-text">0 of 7 completed</span>
+                        <div class="nav-progress-bar">
+                            <div class="nav-progress-fill" id="nav-progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#intro" onclick="SecureTrainer.LearningCenter.loadContent('intro')"
+                            class="nav-link active" data-content="intro">
+                            <div class="nav-icon">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">Introduction to Cybersecurity</div>
+                                <div class="nav-description">Foundation concepts and overview</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#sql" onclick="SecureTrainer.LearningCenter.loadContent('sql')" class="nav-link"
+                            data-content="sql">
+                            <div class="nav-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">SQL Injection</div>
+                                <div class="nav-description">Database security vulnerabilities</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#xss" onclick="SecureTrainer.LearningCenter.loadContent('xss')" class="nav-link"
+                            data-content="xss">
+                            <div class="nav-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">Cross-Site Scripting (XSS)</div>
+                                <div class="nav-description">Client-side attack vectors</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#cmd" onclick="SecureTrainer.LearningCenter.loadContent('cmd')" class="nav-link"
+                            data-content="cmd">
+                            <div class="nav-icon">
+                                <i class="fas fa-terminal"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">Command Injection</div>
+                                <div class="nav-description">System command vulnerabilities</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#auth" onclick="SecureTrainer.LearningCenter.loadContent('auth')" class="nav-link"
+                            data-content="auth">
+                            <div class="nav-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">Secure Authentication</div>
+                                <div class="nav-description">Authentication bypass techniques</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#best-practices" onclick="SecureTrainer.LearningCenter.loadContent('best-practices')"
+                            class="nav-link" data-content="best-practices">
+                            <div class="nav-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">Security Best Practices</div>
+                                <div class="nav-description">Industry standards and guidelines</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                    <div class="progress-dot"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#resources" onclick="SecureTrainer.LearningCenter.loadContent('resources')"
+                            class="nav-link" data-content="resources">
+                            <div class="nav-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="nav-content">
+                                <div class="nav-title">Downloadable Resources</div>
+                                <div class="nav-description">Cheat sheets and reference materials</div>
+                                <div class="nav-progress-indicator">
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot completed"></div>
+                                    <div class="progress-dot completed"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Progress Summary -->
+            <div class="progress-summary">
+                <div class="progress-header">
+                    <h4>Learning Progress</h4>
+                    <button class="progress-toggle" id="progress-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+
+                <div class="progress-content" id="progress-content">
+                    <div class="progress-category">
+                        <div class="category-header">
+                            <span class="category-name">SQL Injection</span>
+                            <span class="category-percentage" id="sql-learning-progress">60%</span>
+                        </div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill sql-progress" id="sql-learning-bar" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-category">
+                        <div class="category-header">
+                            <span class="category-name">XSS</span>
+                            <span class="category-percentage" id="xss-learning-progress">60%</span>
+                        </div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill xss-progress" id="xss-learning-bar" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-category">
+                        <div class="category-header">
+                            <span class="category-name">Command Injection</span>
+                            <span class="category-percentage" id="cmd-learning-progress">50%</span>
+                        </div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill cmd-progress" id="cmd-learning-bar" style="width: 50%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-category">
+                        <div class="category-header">
+                            <span class="category-name">Authentication</span>
+                            <span class="category-percentage" id="auth-learning-progress">50%</span>
+                        </div>
+                        <div class="category-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill auth-progress" id="auth-learning-bar" style="width: 50%">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overall-progress">
+                        <div class="overall-header">
+                            <span class="overall-label">Overall Progress</span>
+                            <span class="overall-percentage" id="overall-learning-progress">25%</span>
+                        </div>
+                        <div class="overall-bar">
+                            <div class="progress-bar">
+                                <div class="progress-fill overall-progress-fill" id="overall-learning-bar"
+                                    style="width: 25%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="learning-content">
+            <div class="content-header">
+                <div class="breadcrumb">
+                    <span class="breadcrumb-item">Learning Center</span>
+                    <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-item active" id="current-section">Introduction</span>
+                </div>
+                <div class="content-actions">
+                    <button class="action-btn" id="bookmark-btn" title="Bookmark this section">
+                        <i class="far fa-bookmark"></i>
+                    </button>
+                    <button class="action-btn" id="share-btn" title="Share this section">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                    <button class="action-btn" id="fullscreen-btn" title="Toggle fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="content-area" class="content-container">
+                <!-- Default content shown if JavaScript fails -->
+                <div id="default-content">
+                    <div class="welcome-section">
+                        <div class="welcome-header">
+                            <h1>Welcome to SecureTrainer Learning Center</h1>
+                            <p class="welcome-subtitle">Your comprehensive cybersecurity education hub</p>
+                        </div>
+
+                        <div class="welcome-video">
+                            <div class="video-container">
+                                <iframe
+                                    src="https://www.youtube.com/embed/inWWhr5tnEA?rel=0&modestbranding=1&showinfo=0"
+                                    title="Cybersecurity Fundamentals" frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+
+                        <div class="learning-grid">
+                            <div class="learning-card sql-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>SQL Injection</h3>
+                                    <p>Master database security vulnerabilities and prevention techniques</p>
+                                    <div class="card-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 60%"></div>
+                                        </div>
+                                        <span class="progress-text">60% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="learning-card xss-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Cross-Site Scripting (XSS)</h3>
+                                    <p>Understand client-side attack vectors and defense strategies</p>
+                                    <div class="card-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 60%"></div>
+                                        </div>
+                                        <span class="progress-text">60% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="learning-card cmd-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-terminal"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Command Injection</h3>
+                                    <p>Discover system command vulnerabilities and their prevention</p>
+                                    <div class="card-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 50%"></div>
+                                        </div>
+                                        <span class="progress-text">50% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="learning-card auth-card">
+                                <div class="card-icon">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Authentication Bypass</h3>
+                                    <p>Explore authentication vulnerabilities and secure implementation</p>
+                                    <div class="card-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 50%"></div>
+                                        </div>
+                                        <span class="progress-text">50% Complete</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="getting-started">
+                            <div class="getting-started-content">
+                                <div class="getting-started-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div class="getting-started-text">
+                                    <h3>Ready to Start Learning?</h3>
+                                    <p>Click on any topic in the sidebar to explore detailed learning materials, videos,
+                                        and interactive content. Each module includes hands-on challenges to reinforce
+                                        your learning.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic content will replace the above when JavaScript loads -->
+                <div class="loading-content" style="display: none;">
+                    <div class="loading-animation">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">Loading content...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Navigation -->
+            <div class="content-navigation">
+                <button id="prev-content" class="nav-button prev-button" style="display: none;">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>Previous</span>
+                </button>
+
+                <div class="content-progress">
+                    <div class="progress-indicator">
+                        <div class="progress-dots">
+                            <div class="progress-dot active"></div>
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                        </div>
+                        <div class="progress-text" id="content-position">Section 1 of 6</div>
+                    </div>
+                </div>
+
+                <button id="next-content" class="nav-button next-button" style="display: none;">
+                    <span>Next</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Learning Progress Modal -->
+    <div id="progress-modal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Learning Progress</h3>
+                <button onclick="SecureTrainer.LearningCenter.closeProgressModal()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="progress-details">
+                    <!-- Progress details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="SecureTrainer.LearningCenter.closeProgressModal()" class="btn btn-secondary">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Learning Center Styles -->
+<style>
+    /* Reset and Base Styles */
+    * {
+        box-sizing: border-box;
+    }
+
+    .learning-center-container {
+        min-height: 80vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 0;
+        margin: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .hero-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-text {
+        flex: 1;
+        max-width: 600px;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin: 0 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .hero-icon {
+        font-size: 4rem;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        margin: 0 0 2rem 0;
+        opacity: 0.9;
+        line-height: 1.6;
+    }
+
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(45deg, #fff, #e0e7ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Hero Visual */
+    .hero-visual {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .learning-illustration {
+        position: relative;
+        width: 300px;
+        height: 300px;
+    }
+
+    .cyber-shield {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .shield-icon {
+        font-size: 3rem;
+        animation: rotate 10s linear infinite;
+    }
+
+    .shield-glow {
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    .floating-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    .element {
+        position: absolute;
+        font-size: 2rem;
+        animation: float 4s ease-in-out infinite;
+    }
+
+    .element-1 {
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .element-2 {
+        top: 20%;
+        right: 15%;
+        animation-delay: 1s;
+    }
+
+    .element-3 {
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 2s;
+    }
+
+    .element-4 {
+        bottom: 10%;
+        right: 10%;
+        animation-delay: 3s;
+    }
+
+    /* Mobile Sidebar Toggle */
+    .mobile-sidebar-toggle {
+        display: none;
+        padding: 1rem 2rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .sidebar-toggle-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-toggle-btn:hover {
+        background: #5a67d8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .sidebar-close-btn {
+        display: none;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #f3f4f6;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 10;
+    }
+
+    .sidebar-close-btn:hover {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        backdrop-filter: blur(4px);
+    }
+
+    /* Main Learning Interface */
+    .learning-interface {
+        display: flex;
+        gap: 2rem;
+        max-width: 100%;
+        margin: 0;
+        padding: 2rem;
+        position: relative;
+        z-index: 2;
+        background: #f8fafc;
+    }
+
+    .learning-sidebar {
+        background: #ffffff;
+        border-radius: 1rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        padding: 2rem;
+        position: sticky;
+        top: 2rem;
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+        min-width: 350px;
+        max-width: 350px;
+        flex-shrink: 0;
+        border: 1px solid #e5e7eb;
+        z-index: 10;
+    }
+
+    /* Search Container */
+    .search-container {
+        margin-bottom: 2rem;
+    }
+
+    .search-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        color: #9ca3af;
+        font-size: 1rem;
+        pointer-events: none;
+    }
+
+    .search-clear {
+        position: absolute;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        transition: color 0.2s ease;
+    }
+
+    .search-clear:hover {
+        color: #6b7280;
+    }
+
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 10;
+        margin-top: 0.5rem;
+    }
+
+    /* Navigation */
+    .learning-nav {
+        margin-bottom: 2rem;
+    }
+
+    .nav-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .nav-header h3 {
+        margin: 0 0 0.75rem 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1f2937;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .nav-progress {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-progress span {
+        font-size: 0.875rem;
+        color: #374151;
+        font-weight: 500;
+    }
+
+    .nav-progress-bar {
+        width: 100%;
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .nav-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        background: #f9fafb;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .nav-link:hover::before {
+        left: 100%;
+    }
+
+    .nav-link:hover {
+        background: white;
+        color: #667eea;
+        transform: translateX(4px);
+        border-color: #e0e7ff;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .nav-link.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: #667eea;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        transform: translateX(4px);
+    }
+
+    .nav-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 0.5rem;
+        margin-right: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .nav-link.active .nav-icon {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-icon i {
+        font-size: 1.25rem;
+        color: #667eea;
+    }
+
+    .nav-link.active .nav-icon i {
+        color: white;
+    }
+
+    .nav-content {
+        flex: 1;
+    }
+
+    .nav-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+        color: #1f2937;
+    }
+
+    .nav-description {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+
+    .nav-link.active .nav-title {
+        color: white;
+    }
+
+    .nav-link.active .nav-description {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .nav-progress-indicator {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .progress-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        transition: background 0.3s ease;
+    }
+
+    .progress-dot.completed {
+        background: #10b981;
+    }
+
+    .nav-link.active .progress-dot {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .nav-link.active .progress-dot.completed {
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Progress Summary */
+    .progress-summary {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .progress-toggle {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        transition: color 0.2s ease;
+    }
+
+    .progress-toggle:hover {
+        color: #374151;
+    }
+
+    .progress-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .progress-category {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .category-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .category-percentage {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .category-progress {
+        width: 100%;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: #e5e7eb;
+        border-radius: 5px;
+        overflow: hidden;
+        border: 1px solid #d1d5db;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.5s ease;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    .sql-progress {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+    }
+
+    .xss-progress {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    }
+
+    .cmd-progress {
+        background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+        box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+    }
+
+    .auth-progress {
+        background: linear-gradient(90deg, #10b981, #059669);
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .overall-progress {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .overall-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .overall-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #1f2937;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .overall-percentage {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #667eea;
+    }
+
+    .overall-progress-fill {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    /* Main Content Area */
+    .learning-content {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        flex: 1;
+        min-height: 600px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .breadcrumb-item {
+        color: #6b7280;
+    }
+
+    .breadcrumb-item.active {
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    .breadcrumb-separator {
+        font-size: 0.75rem;
+    }
+
+    .content-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .content-container {
+        padding: 2rem;
+        line-height: 1.7;
+        color: #374151;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        text-align: center;
+        padding: 2rem 0;
+    }
+
+    .welcome-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0 0 1rem 0;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.125rem;
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    .welcome-video {
+        margin: 2rem 0;
+    }
+
+    .video-container {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%;
+        /* 16:9 aspect ratio */
+        margin: 2rem 0;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        background: #000;
+    }
+
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .learning-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin: 3rem 0;
+    }
+
+    .learning-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .learning-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .learning-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .sql-card::before {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    .xss-card::before {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .cmd-card::before {
+        background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+    }
+
+    .auth-card::before {
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    .card-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 1rem;
+        margin-bottom: 1.5rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .sql-card .card-icon {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .xss-card .card-icon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .cmd-card .card-icon {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    .auth-card .card-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .card-content h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 0.75rem 0;
+        color: #1f2937;
+    }
+
+    .card-content p {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    .card-progress {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .progress-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .getting-started {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #bae6fd;
+        border-radius: 1rem;
+        padding: 2rem;
+        margin: 3rem 0;
+    }
+
+    .getting-started-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .getting-started-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        border-radius: 1rem;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .getting-started-text h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        color: #0c4a6e;
+    }
+
+    .getting-started-text p {
+        margin: 0;
+        color: #0369a1;
+        line-height: 1.6;
+    }
+
+    /* Content Styling */
+    .content-container h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        color: #1f2937;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .content-container h2 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin-top: 2.5rem;
+        margin-bottom: 1.5rem;
+        color: #374151;
+    }
+
+    .content-container h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #4b5563;
+    }
+
+    .content-container p {
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+        color: #6b7280;
+        font-size: 1.125rem;
+    }
+
+    .content-container ul,
+    .content-container ol {
+        margin-bottom: 1.5rem;
+        padding-left: 2rem;
+    }
+
+    .content-container li {
+        margin-bottom: 0.75rem;
+        color: #6b7280;
+        line-height: 1.7;
+        font-size: 1.125rem;
+    }
+
+    .content-container strong {
+        color: #374151;
+        font-weight: 600;
+    }
+
+    .code-box {
+        background: #1e293b;
+        color: #f1f5f9;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        border: 1px solid #334155;
+        position: relative;
+    }
+
+    .code-box::before {
+        content: attr(data-language);
+        position: absolute;
+        top: 0.75rem;
+        right: 1rem;
+        background: #334155;
+        color: #94a3b8;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .code-box code {
+        white-space: pre;
+        display: block;
+    }
+
+    /* Loading Animation */
+    .loading-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+    }
+
+    .loading-animation {
+        text-align: center;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e5e7eb;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    .loading-text {
+        color: #6b7280;
+        font-size: 1.125rem;
+        font-weight: 500;
+    }
+
+    /* Content Navigation */
+    .content-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2rem;
+        border-top: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        color: #374151;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .nav-button:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .content-progress {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .progress-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .progress-dots {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .progress-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .progress-dot.active {
+        background: #667eea;
+        transform: scale(1.2);
+    }
+
+    .progress-text {
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Animations */
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes rotate {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes glow {
+        0% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Modal styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        position: relative;
+        background: white;
+        border-radius: 1rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+        color: #374151;
+        background-color: #f3f4f6;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 1.5rem 2rem;
+        border-top: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #4b5563;
+        transform: translateY(-2px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .hero-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 2rem;
+        }
+
+        .hero-visual {
+            order: -1;
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .mobile-sidebar-toggle {
+            display: block;
+        }
+
+        .learning-interface {
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 0;
+            padding: 1.5rem;
+        }
+
+        .learning-sidebar {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 350px;
+            height: 100vh;
+            max-height: 100vh;
+            z-index: 1000;
+            transition: left 0.3s ease;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            padding-top: 4rem;
+        }
+
+        .learning-sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-close-btn {
+            display: block;
+        }
+
+        .learning-content {
+            max-width: 100%;
+            margin: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 2rem 1rem;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+        }
+
+        .hero-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .learning-interface {
+            padding: 1rem;
+        }
+
+        .learning-center-container {
+            margin: 0;
+            border-radius: 0.5rem;
+        }
+
+        .learning-sidebar {
+            padding: 1.5rem;
+        }
+
+        .content-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .content-actions {
+            align-self: flex-end;
+        }
+
+        .content-container {
+            padding: 1.5rem;
+        }
+
+        .learning-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .getting-started-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .content-navigation {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .nav-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .hero-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .learning-sidebar {
+            padding: 1rem;
+        }
+
+        .content-container {
+            padding: 1rem;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}" onerror="handleScriptLoadError('main.js')"></script>
+<script src="{{ url_for('static', filename='js/learning-center.js') }}"
+    onerror="handleScriptLoadError('learning-center.js')"></script>
+<script>
+    // Script loading error handler
+    function handleScriptLoadError(scriptName) {
+        console.error('Failed to load script:', scriptName);
+        document.getElementById('script-load-error-flag')[scriptName] = true;
+    }
+
+    // Store script load errors
+    if (!document.getElementById('script-load-error-flag')) {
+        const errorFlag = document.createElement('div');
+        errorFlag.id = 'script-load-error-flag';
+        errorFlag.style.display = 'none';
+        document.body.appendChild(errorFlag);
+    }
+
+    // Single DOMContentLoaded event listener with comprehensive initialization
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('📚 Learning Center page loaded');
+
+        // Force show the hero section and main content
+        const heroSection = document.querySelector('.hero-section');
+        const learningInterface = document.querySelector('.learning-interface');
+
+        if (heroSection) {
+            heroSection.style.display = 'block';
+        }
+
+        if (learningInterface) {
+            learningInterface.style.display = 'flex';
+        }
+
+        // Initialize progress bars with animation
+        setTimeout(() => {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        }, 500);
+
+        // Ensure SecureTrainer namespace exists
+        if (typeof SecureTrainer === 'undefined') {
+            console.warn('⚠️ SecureTrainer namespace not found, creating fallback...');
+            window.SecureTrainer = {};
+        }
+
+        // Add fallback debounce function if Utils not available
+        if (!SecureTrainer.Utils) {
+            console.warn('⚠️ SecureTrainer.Utils not found, creating fallback utilities...');
+            SecureTrainer.Utils = {
+                debounce: function (func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = () => {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+            };
+        }
+
+        // Initialize Learning Center with timeout fallback
+        let initializationAttempted = false;
+        const maxWaitTime = 3000; // 3 seconds max wait
+        const startTime = Date.now();
+
+        function attemptInitialization() {
+            if (initializationAttempted) return;
+
+            const elapsedTime = Date.now() - startTime;
+
+            if (SecureTrainer.LearningCenter) {
+                console.log('✓ Initializing Learning Center...');
+                initializationAttempted = true;
+                try {
+                    SecureTrainer.LearningCenter.init();
+                    console.log('✓ Learning Center initialized successfully');
+                } catch (initError) {
+                    console.error('❌ Learning Center initialization error:', initError);
+                    activateFallbackMode('Initialization failed');
+                }
+            } else if (elapsedTime < maxWaitTime) {
+                console.warn(`⏳ SecureTrainer.LearningCenter not ready, retrying... (${Math.floor(elapsedTime / 1000)}s elapsed)`);
+                setTimeout(attemptInitialization, 100);
+            } else {
+                console.error('❌ Failed to initialize Learning Center after timeout');
+                initializationAttempted = true;
+                activateFallbackMode('Module load timeout');
+            }
+        }
+
+        // Start initialization attempt
+        setTimeout(attemptInitialization, 100);
+
+        // Fallback mode activation
+        function activateFallbackMode(reason) {
+            console.warn('🔄 Activating fallback mode. Reason:', reason);
+
+            // Show default content
+            const defaultContent = document.getElementById('default-content');
+            if (defaultContent) {
+                defaultContent.style.display = 'block';
+            }
+
+            // Hide loading indicators
+            const loadingContent = document.querySelectorAll('.loading-content');
+            loadingContent.forEach(el => el.style.display = 'none');
+
+            // Show informational message
+            const contentArea = document.getElementById('content-area');
+            if (contentArea && reason) {
+                const fallbackNotice = document.createElement('div');
+                fallbackNotice.style.cssText = 'background: #fffbeb; border: 1px solid #fbbf24; padding: 12px; border-radius: 6px; margin-bottom: 16px; color: #92400e; font-size: 14px;';
+                fallbackNotice.innerHTML = `
+                <strong>ℹ️ Notice:</strong> Learning Center is running in basic mode. Some features may be limited.
+                <button onclick="location.reload()" style="float: right; background: #fbbf24; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer;">Retry</button>
+            `;
+                contentArea.insertBefore(fallbackNotice, contentArea.firstChild);
+            }
+
+            // Enable basic navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('Basic navigation clicked:', this.dataset.content);
+                    // Basic content switching without module
+                    const allContents = document.querySelectorAll('[id$="-content"]');
+                    allContents.forEach(c => c.style.display = 'none');
+
+                    const targetContent = document.getElementById('default-content');
+                    if (targetContent) {
+                        targetContent.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        // Add smooth scroll behavior
+        document.documentElement.style.scrollBehavior = 'smooth';
+
+        // Add CSS transitions to content area
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.style.transition = 'opacity 0.3s ease-in-out';
+        }
+
+        // Mobile sidebar toggle handlers
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarClose = document.getElementById('sidebar-close');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebar = document.getElementById('learning-sidebar');
+
+        if (sidebarToggle && sidebar && sidebarOverlay) {
+            sidebarToggle.addEventListener('click', function () {
+                sidebar.classList.add('active');
+                sidebarOverlay.style.display = 'block';
+            });
+        }
+
+        if (sidebarClose && sidebar && sidebarOverlay) {
+            sidebarClose.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                sidebarOverlay.style.display = 'none';
+            });
+        }
+
+        if (sidebarOverlay && sidebar) {
+            sidebarOverlay.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                sidebarOverlay.style.display = 'none';
+            });
+        }
+
+        console.log('📚 Page initialization complete');
+    });
+</script>
+
+<!-- Learning Module Progress Tracker -->
+<script>
+// Learning Module Progress Tracker
+class ModuleProgressTracker {
+    constructor(moduleId) {
+        this.moduleId = moduleId;
+        this.startTime = Date.now();
+        this.scrollPercentage = 0;
+        this.sectionsVisited = new Set();
+        this.videosWatched = {};
+        this.updateInterval = null;
+        this.init();
+    }
+    
+    init() {
+        this.trackScrollDepth();
+        this.trackVideoProgress();
+        this.trackSectionVisits();
+        this.startPeriodicUpdates();
+    }
+    
+    trackScrollDepth() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        
+        const updateScrollPercentage = () => {
+            const scrollTop = contentArea.scrollTop;
+            const scrollHeight = contentArea.scrollHeight - contentArea.clientHeight;
+            if (scrollHeight > 0) {
+                this.scrollPercentage = Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
+            }
+        };
+        
+        contentArea.addEventListener('scroll', () => {
+            updateScrollPercentage();
+        });
+    }
+    
+    trackVideoProgress() {
+        // Track YouTube iframe videos
+        const videos = document.querySelectorAll('iframe[src*="youtube"]');
+        videos.forEach((video, index) => {
+            const videoId = `video_${index}`;
+            this.videosWatched[videoId] = 0;
+            
+            // Mark as watched when in view
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        this.videosWatched[videoId] = Math.max(
+                            this.videosWatched[videoId], 
+                            50
+                        );
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            observer.observe(video);
+        });
+    }
+    
+    trackSectionVisits() {
+        // Track which sections user has scrolled through
+        const sections = document.querySelectorAll('[data-section-id]');
+        sections.forEach(section => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const sectionId = entry.target.getAttribute('data-section-id');
+                        this.sectionsVisited.add(sectionId);
+                    }
+                });
+            }, { threshold: 0.3 });
+            
+            observer.observe(section);
+        });
+    }
+    
+    getTimeSpent() {
+        return Math.floor((Date.now() - this.startTime) / 1000);
+    }
+    
+    async saveProgress() {
+        const progressData = {
+            scroll_percentage: this.scrollPercentage,
+            time_spent: this.getTimeSpent(),
+            sections_visited: Array.from(this.sectionsVisited),
+            videos_watched: this.videosWatched
+        };
+        
+        try {
+            const response = await fetch(`/api/learning/progress/${this.moduleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(progressData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.is_complete) {
+                this.showCompletionNotification();
+                this.stopTracking();
+            }
+            
+            this.updateProgressUI(result);
+        } catch (error) {
+            console.error('Error saving progress:', error);
+        }
+    }
+    
+    startPeriodicUpdates() {
+        // Save progress every 30 seconds
+        this.updateInterval = setInterval(() => {
+            this.saveProgress();
+        }, 30000);
+    }
+    
+    stopTracking() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+    }
+    
+    showCompletionNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'completion-notification';
+        notification.innerHTML = `
+            <div class="completion-content">
+                <i class="fas fa-check-circle"></i>
+                <h3>Module Complete!</h3>
+                <p>Great job! You've completed this learning module.</p>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
+    updateProgressUI(result) {
+        const progressPercentage = result.progress_percentage || 0;
+        
+        // Update progress bar if exists
+        const progressBar = document.querySelector(`[data-module="${this.moduleId}"] .progress-fill`);
+        if (progressBar) {
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+        
+        // Update completion badge
+        const navLink = document.querySelector(`[data-content="${this.moduleId}"]`);
+        if (navLink && result.is_complete) {
+            navLink.classList.add('completed');
+        }
+        
+        // Reload overall progress data
+        if (typeof SecureTrainer !== 'undefined' && SecureTrainer.LearningCenter && SecureTrainer.LearningCenter.loadProgressData) {
+            SecureTrainer.LearningCenter.loadProgressData();
+        }
+    }
+}
+
+// Initialize tracker when module loads
+let currentTracker = null;
+
+function initializeModuleTracking(moduleId) {
+    if (currentTracker) {
+        currentTracker.stopTracking();
+    }
+    currentTracker = new ModuleProgressTracker(moduleId);
+}
+
+// Hook into existing loadContent function if it exists
+if (typeof SecureTrainer !== 'undefined' && SecureTrainer.LearningCenter && SecureTrainer.LearningCenter.loadContent) {
+    const originalLoadContent = SecureTrainer.LearningCenter.loadContent;
+    SecureTrainer.LearningCenter.loadContent = function(moduleId) {
+        originalLoadContent.call(this, moduleId);
+        initializeModuleTracking(moduleId);
+    };
+}
+</script>
+
+<style>
+.completion-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.completion-content {
+    text-align: center;
+}
+
+.completion-content i {
+    font-size: 4rem;
+    color: #10b981;
+    margin-bottom: 1rem;
+}
+
+.completion-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+}
+
+.completion-content p {
+    color: #6b7280;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.nav-link.completed::after {
+    content: '✓';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #10b981;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+</style>
+
+
+{% endblock %}

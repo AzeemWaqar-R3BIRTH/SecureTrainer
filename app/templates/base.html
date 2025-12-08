@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SecureTrainer{% endblock %}</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-ui.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/hint-fix.css') }}?v={{ range(1, 10000) | random }}">
+    <style>
+        /* Quick inline styles */
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .active-screen {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-900">
+    <header class="bg-blue-800 text-white shadow-md">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <a href="/" class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-shield-alt mr-3"></i>
+                    SecureTrainer
+                </a>
+            </div>
+            <div class="flex space-x-6">
+                {% if user %}
+                {% if user.is_admin or session.get('is_admin') %}
+                <a href="{{ url_for('admin.admin_dashboard') }}"
+                    class="hover:text-blue-200 flex items-center text-yellow-300 font-medium">
+                    <i class="fas fa-user-shield mr-2"></i>
+                    Admin
+                </a>
+                {% endif %}
+                <a href="/dashboard" class="hover:text-blue-200 flex items-center">
+                    <i class="fas fa-tachometer-alt mr-2"></i>
+                    Dashboard
+                </a>
+                <a href="/learning-center" class="hover:text-blue-200 flex items-center">
+                    <i class="fas fa-graduation-cap mr-2"></i>
+                    Learning Center
+                </a>
+                <a href="/challenges" class="hover:text-blue-200 flex items-center">
+                    <i class="fas fa-trophy mr-2"></i>
+                    Challenges
+                </a>
+                <a href="/logout" class="hover:text-blue-200 flex items-center">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                </a>
+                {% else %}
+                <a href="/register" class="hover:text-blue-200 flex items-center">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Register
+                </a>
+                <a href="/login" class="hover:text-blue-200 flex items-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Login
+                </a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- CSRF Token for security -->
+    {% if csrf_token is defined and csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% else %}
+    <meta name="csrf-token" content="">
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div id="flash-messages" class="fixed top-4 right-4 z-50 space-y-2">
+        {% for category, message in messages %}
+        <div
+            class="flash-message bg-{{ 'green' if category == 'success' else 'red' if category == 'error' else 'blue' }}-100 border border-{{ 'green' if category == 'success' else 'red' if category == 'error' else 'blue' }}-400 text-{{ 'green' if category == 'success' else 'red' if category == 'error' else 'blue' }}-700 px-4 py-3 rounded shadow-md">
+            {{ message }}
+            <button onclick="this.parentElement.remove()"
+                class="float-right ml-2 text-lg font-bold cursor-pointer">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(() => {
+            const flashContainer = document.getElementById('flash-messages');
+            if (flashContainer) {
+                flashContainer.style.transition = 'opacity 0.5s';
+                flashContainer.style.opacity = '0';
+                setTimeout(() => flashContainer.remove(), 500);
+            }
+        }, 5000);
+    </script>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Essential JavaScript Only -->
+    <script>
+        // Minimal client-side functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Form validation enhancement
+            const forms = document.querySelectorAll('form[data-validate]');
+            forms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    const required = form.querySelectorAll('[required]');
+                    for (let field of required) {
+                        if (!field.value.trim()) {
+                            e.preventDefault();
+                            field.focus();
+                            field.classList.add('border-red-500');
+                            return;
+                        }
+                    }
+                });
+            });
+
+            // Loading states for forms
+            const submitButtons = document.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                // Store original text
+                button.dataset.originalText = button.innerHTML;
+
+                button.addEventListener('click', function (e) {
+                    const form = this.closest('form');
+                    // Only apply loading state if form exists and doesn't have custom submit handler
+                    if (form && !form.hasAttribute('data-custom-submit')) {
+                        // Check validity if browser supports it
+                        if (form.checkValidity && !form.checkValidity()) {
+                            return;
+                        }
+
+                        const btn = this;
+                        // Use setTimeout to allow the submit event to propagate before disabling
+                        setTimeout(() => {
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                        }, 0);
+
+                        // Reset after 10 seconds as safety
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = btn.dataset.originalText || 'Submit';
+                        }, 10000);
+                    }
+                });
+            });
+        });
+    </script>
+    <!-- Page-specific scripts -->
+    {% block scripts %}{% endblock %}
+
+    <!-- Chart.js for analytics (loaded on demand) -->
+    {% if show_charts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endif %}
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: securetrainer
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn securetrainer:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false  # You'll add this manually from MongoDB Atlas
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USE_TLS
+        value: True
+      - key: MAIL_USERNAME
+        sync: false  # Add manually
+      - key: MAIL_PASSWORD
+        sync: false  # Add manually
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: ADMIN_REGISTRATION_TOKEN
+        generateValue: true

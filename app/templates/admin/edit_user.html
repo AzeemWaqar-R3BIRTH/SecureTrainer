@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - SecureTrainer{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
+            <p class="text-gray-600">Update details for {{ user.get('first_name', 'Unknown') }} {{ user.get('last_name', 'User') }}</p>
+        </div>
+        <a href="{{ url_for('admin.manage_users') }}"
+            class="text-gray-600 hover:text-gray-800 flex items-center transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Users
+        </a>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.get('_id', user.get('id', ''))) }}" class="p-6 space-y-6"
+            data-validate>
+            {% if csrf_token is defined and csrf_token %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+
+            <!-- Personal Info -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="{{ user.get('first_name', '') }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ user.get('last_name', '') }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="email" name="email" value="{{ user.get('email', '') }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="username" name="username" value="{{ user.get('username', '') }}" readonly
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed">
+                        <p class="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Info -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Organization</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                        <input type="text" id="company" name="company" value="{{ user.get('company', '') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select id="department" name="department"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="IT" {% if user.get('department')=='IT' %}selected{% endif %}>IT</option>
+                            <option value="HR" {% if user.get('department')=='HR' %}selected{% endif %}>HR</option>
+                            <option value="Finance" {% if user.get('department')=='Finance' %}selected{% endif %}>Finance
+                            </option>
+                            <option value="Sales" {% if user.get('department')=='Sales' %}selected{% endif %}>Sales</option>
+                            <option value="Engineering" {% if user.get('department')=='Engineering' %}selected{% endif %}>
+                                Engineering</option>
+                            <option value="Marketing" {% if user.get('department')=='Marketing' %}selected{% endif %}>Marketing
+                            </option>
+                            <option value="Legal" {% if user.get('department')=='Legal' %}selected{% endif %}>Legal</option>
+                            <option value="Operations" {% if user.get('department')=='Operations' %}selected{% endif %}>
+                                Operations</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role & Permissions -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Role & Progress</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <select id="role" name="role"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Trainee" {% if user.get('role')=='Trainee' %}selected{% endif %}>Trainee</option>
+                            <option value="Junior Analyst" {% if user.get('role')=='Junior Analyst' %}selected{% endif %}>
+                                Junior Analyst</option>
+                            <option value="Analyst" {% if user.get('role')=='Analyst' %}selected{% endif %}>Analyst</option>
+                            <option value="Senior Analyst" {% if user.get('role')=='Senior Analyst' %}selected{% endif %}>
+                                Senior Analyst</option>
+                            <option value="Specialist" {% if user.get('role')=='Specialist' %}selected{% endif %}>Specialist
+                            </option>
+                            <option value="Expert" {% if user.get('role')=='Expert' %}selected{% endif %}>Expert</option>
+                            <option value="Lead Analyst" {% if user.get('role')=='Lead Analyst' %}selected{% endif %}>Lead
+                                Analyst</option>
+                            <option value="Team Lead" {% if user.get('role')=='Team Lead' %}selected{% endif %}>Team Lead
+                            </option>
+                            <option value="Department Head" {% if user.get('role')=='Department Head' %}selected{% endif %}>
+                                Department Head</option>
+                            <option value="Security Architect" {% if user.get('role')=='Security Architect' %}selected{% endif
+                                %}>Security Architect</option>
+                            <option value="Chief Security Officer" {% if user.get('role')=='Chief Security Officer'
+                                %}selected{% endif %}>Chief Security Officer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex items-center h-full pt-6">
+                            <input type="checkbox" id="is_admin" name="is_admin" {% if user.get('is_admin', False) %}checked{% endif
+                                %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="is_admin" class="ml-2 block text-sm text-gray-900">
+                                Grant Admin Privileges
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="score" class="block text-sm font-medium text-gray-700 mb-1">Score</label>
+                        <input type="number" id="score" name="score" value="{{ user.get('score', 0) }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                        <input type="number" id="level" name="level" value="{{ user.get('level', 1) }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Security</h3>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Reset Password
+                        (Optional)</label>
+                    <input type="password" id="password" name="password"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Leave blank to keep current password">
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <a href="{{ url_for('admin.manage_users') }}"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition shadow-sm">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

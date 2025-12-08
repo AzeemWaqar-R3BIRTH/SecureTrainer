@@ -1,0 +1,5 @@
+user_id,level,score,hint_count,challenges_completed,success_rate,avg_completion_time,consecutive_successes,consecutive_failures,sql_injection_score,xss_score,command_injection_score,authentication_score,csrf_score,days_since_registration,difficulty_label
+692c740dce7d857feb6962fe,15,28547,0,56,0.8531468531468531,27.513651631095193,1,0,1420,0,2319,0,0,0,expert
+692f28e4b6111df1622f32cd,1,0,0,0,0.5,300.0,0,0,0,0,0,0,0,5,beginner
+692f2a1cb6111df1622f32ce,1,0,0,0,0.5,300.0,0,0,0,0,0,0,0,5,beginner
+6933056a68d1ac42574e85ad,1,58,0,1,1.0,0.0016007423400878906,1,0,0,0,60,0,0,0,advanced

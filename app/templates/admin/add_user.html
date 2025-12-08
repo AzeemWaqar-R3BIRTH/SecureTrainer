@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Add User - SecureTrainer{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Add New User</h1>
+            <p class="text-gray-600">Create a new user account manually</p>
+        </div>
+        <a href="{{ url_for('admin.manage_users') }}"
+            class="text-gray-600 hover:text-gray-800 flex items-center transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Users
+        </a>
+    </div>
+
+    <!-- Add Form -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <form method="POST" action="{{ url_for('admin.add_user') }}" class="p-6 space-y-6" data-validate>
+            {% if csrf_token is defined and csrf_token %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+
+            <!-- Personal Info -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input type="text" id="first_name" name="first_name" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="email" name="email" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="username" name="username" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Info -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Organization</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                        <input type="text" id="company" name="company" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select id="department" name="department" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="" disabled selected>Select Department</option>
+                            <option value="IT">IT</option>
+                            <option value="HR">HR</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Legal">Legal</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role & Permissions -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Role & Progress</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <select id="role" name="role"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Trainee" selected>Trainee</option>
+                            <option value="Junior Analyst">Junior Analyst</option>
+                            <option value="Analyst">Analyst</option>
+                            <option value="Senior Analyst">Senior Analyst</option>
+                            <option value="Specialist">Specialist</option>
+                            <option value="Expert">Expert</option>
+                            <option value="Lead Analyst">Lead Analyst</option>
+                            <option value="Team Lead">Team Lead</option>
+                            <option value="Department Head">Department Head</option>
+                            <option value="Security Architect">Security Architect</option>
+                            <option value="Chief Security Officer">Chief Security Officer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex items-center h-full pt-6">
+                            <input type="checkbox" id="is_admin" name="is_admin"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="is_admin" class="ml-2 block text-sm text-gray-900">
+                                Grant Admin Privileges
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="score" class="block text-sm font-medium text-gray-700 mb-1">Initial Score</label>
+                        <input type="number" id="score" name="score" value="0" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Initial Level</label>
+                        <input type="number" id="level" name="level" value="1" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Security</h3>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Set initial password">
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <a href="{{ url_for('admin.manage_users') }}"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition shadow-sm">
+                    Create User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

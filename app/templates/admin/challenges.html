@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Challenges - SecureTrainer{% endblock %}
+
+{% block content %}
+<div class="flex flex-col space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center bg-white p-6 rounded-lg shadow-md">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Manage Challenges</h1>
+            <p class="text-gray-600">View and manage all training challenges ({{ challenges|length }} total)</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.admin_dashboard') }}"
+                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+            <button onclick="document.getElementById('add-challenge-modal').classList.remove('hidden')"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                <i class="fas fa-plus mr-2"></i> Add Challenge
+            </button>
+        </div>
+    </div>
+
+    <!-- Challenges Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                        <th class="p-4 font-semibold w-2/5">Challenge Question</th>
+                        <th class="p-4 font-semibold">Category</th>
+                        <th class="p-4 font-semibold">Difficulty</th>
+                        <th class="p-4 font-semibold">Stats</th>
+                        <th class="p-4 font-semibold text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for challenge in challenges %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4">
+                            <div class="font-medium text-gray-900 mb-1">{{ challenge.question }}</div>
+                            <div class="flex items-center space-x-3 text-xs text-gray-500">
+                                <span class="flex items-center">
+                                    <i class="fas fa-hashtag mr-1"></i>{{ challenge.id }}
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-trophy mr-1"></i>{{ challenge.score_weight }} pts
+                                </span>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-tag mr-1"></i>{{ challenge.category }}
+                            </span>
+                            <div class="text-xs text-gray-500 mt-1">{{ challenge.type }}</div>
+                        </td>
+                        <td class="p-4">
+                            {% set diff_lower = challenge.difficulty|lower %}
+                            {% if diff_lower == 'beginner' or diff_lower == 'easy' %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-circle text-green-500 mr-1" style="font-size: 6px;"></i>{{
+                                challenge.difficulty }}
+                            </span>
+                            {% elif diff_lower == 'intermediate' or diff_lower == 'medium' %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-circle text-yellow-500 mr-1" style="font-size: 6px;"></i>{{
+                                challenge.difficulty }}
+                            </span>
+                            {% elif diff_lower == 'advanced' or diff_lower == 'hard' %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                <i class="fas fa-circle text-orange-500 mr-1" style="font-size: 6px;"></i>{{
+                                challenge.difficulty }}
+                            </span>
+                            {% elif diff_lower == 'expert' %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-circle text-red-500 mr-1" style="font-size: 6px;"></i>{{
+                                challenge.difficulty }}
+                            </span>
+                            {% else %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ challenge.difficulty }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4">
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ challenge.statistics.successful_attempts }} / {{ challenge.statistics.total_attempts
+                                }} solved
+                            </div>
+                            <div class="w-32 bg-gray-200 rounded-full h-2 mt-1">
+                                <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                    style="width: {{ challenge.statistics.success_rate }}%"></div>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">{{ challenge.statistics.success_rate|round(1) }}%
+                                success rate</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="viewChallenge({{ loop.index0 }})"
+                                    class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded transition"
+                                    title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="deleteChallenge('{{ challenge.id }}')"
+                                    class="text-red-600 hover:text-red-900 hover:bg-red-50 p-2 rounded transition"
+                                    title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="p-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>No challenges found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Challenge Details Modal -->
+<div id="challenge-details-modal"
+    class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-11/12 max-w-4xl shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-2xl font-bold text-gray-900">Challenge Details</h3>
+            <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="challenge-details-content" class="space-y-4">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Add Challenge Modal -->
+<div id="add-challenge-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-11/12 max-w-2xl shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-2xl font-bold text-gray-900">Add New Challenge</h3>
+            <button onclick="document.getElementById('add-challenge-modal').classList.add('hidden')"
+                class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <form id="add-challenge-form" onsubmit="submitAddChallenge(event)" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Challenge ID</label>
+                    <input type="text" name="challenge_id" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Score Weight</label>
+                    <input type="number" name="score_weight" required min="0" value="10"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <select name="category" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                        <option value="SQL Injection">SQL Injection</option>
+                        <option value="Cross-Site Scripting (XSS)">Cross-Site Scripting (XSS)</option>
+                        <option value="Command Injection">Command Injection</option>
+                        <option value="Authentication Attacks">Authentication Attacks</option>
+                        <option value="CSRF Vulnerabilities">CSRF Vulnerabilities</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Type</label>
+                    <select name="type" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                        <option value="sql_injection">sql_injection</option>
+                        <option value="xss">xss</option>
+                        <option value="command_injection">command_injection</option>
+                        <option value="authentication">authentication</option>
+                        <option value="csrf">csrf</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Difficulty</label>
+                <select name="difficulty" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Question</label>
+                <input type="text" name="question" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Scenario</label>
+                <textarea name="scenario" rows="2" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Payload (Optional)</label>
+                <textarea name="payload" rows="2"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 font-mono"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Answer / Explanation</label>
+                <textarea name="answer" rows="2" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Hint (Optional)</label>
+                <input type="text" name="hint"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Expected Solutions (Comma separated)</label>
+                <input type="text" name="expected_solutions" placeholder="e.g. alert, script, <script>"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                <p class="text-xs text-gray-500 mt-1">These keywords are used to validate user answers.</p>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <button type="button" onclick="document.getElementById('add-challenge-modal').classList.add('hidden')"
+                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </button>
+                <button type="submit"
+                    class="bg-blue-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Create Challenge
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Store challenges data for modal
+    const challengesData = {{ challenges| tojson }};
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+    }
+
+    function viewChallenge(index) {
+        const challenge = challengesData[index];
+        const modal = document.getElementById('challenge-details-modal');
+        const content = document.getElementById('challenge-details-content');
+
+        content.innerHTML = `
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Challenge ID</label>
+                    <p class="text-gray-900">${challenge.id}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Category</label>
+                    <p class="text-gray-900">${challenge.category}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Type</label>
+                    <p class="text-gray-900">${challenge.type}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Difficulty</label>
+                    <p class="text-gray-900">${challenge.difficulty}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Score Weight</label>
+                    <p class="text-gray-900">${challenge.score_weight} points</p>
+                </div>
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Success Rate</label>
+                    <p class="text-gray-900">${challenge.statistics.success_rate.toFixed(1)}%</p>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="text-sm font-semibold text-gray-600">Question</label>
+                <p class="text-gray-900 mt-1">${challenge.question}</p>
+            </div>
+            
+            ${challenge.scenario ? `
+            <div class="mt-4">
+                <label class="text-sm font-semibold text-gray-600">Scenario</label>
+                <p class="text-gray-900 mt-1 bg-gray-50 p-3 rounded">${challenge.scenario}</p>
+            </div>
+            ` : ''}
+            
+            ${challenge.payload && !challenge.hide_payload ? `
+            <div class="mt-4">
+                <label class="text-sm font-semibold text-gray-600">Payload</label>
+                <pre class="text-green-400 mt-1 bg-gray-900 p-3 rounded font-mono text-sm overflow-x-auto whitespace-pre-wrap break-all">${escapeHtml(challenge.payload)}</pre>
+            </div>
+            ` : ''}
+            
+            ${challenge.hint ? `
+            <div class="mt-4">
+                <label class="text-sm font-semibold text-gray-600">Hint</label>
+                <p class="text-gray-900 mt-1 bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">${challenge.hint}</p>
+            </div>
+            ` : ''}
+            
+            ${challenge.answer ? `
+            <div class="mt-4">
+                <label class="text-sm font-semibold text-gray-600">Answer/Explanation</label>
+                <p class="text-gray-900 mt-1 bg-green-50 p-3 rounded border-l-4 border-green-400">${challenge.answer}</p>
+            </div>
+            ` : ''}
+            
+            <div class="mt-6 pt-4 border-t">
+                <h4 class="font-semibold text-gray-900 mb-3">Statistics</h4>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-3 rounded">
+                        <p class="text-sm text-gray-600">Total Attempts</p>
+                        <p class="text-2xl font-bold text-blue-600">${challenge.statistics.total_attempts}</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded">
+                        <p class="text-sm text-gray-600">Successful</p>
+                        <p class="text-2xl font-bold text-green-600">${challenge.statistics.successful_attempts}</p>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded">
+                        <p class="text-sm text-gray-600">Success Rate</p>
+                        <p class="text-2xl font-bold text-purple-600">${challenge.statistics.success_rate.toFixed(1)}%</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('challenge-details-modal').classList.add('hidden');
+    }
+
+    function deleteChallenge(id) {
+        if (confirm('Are you sure you want to delete this challenge?')) {
+            fetch(`/admin/challenge/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error deleting challenge: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the challenge');
+                });
+        }
+    }
+
+    function submitAddChallenge(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Convert expected_solutions to array
+        if (data.expected_solutions) {
+            data.expected_solutions = data.expected_solutions.split(',').map(s => s.trim()).filter(s => s);
+        } else {
+            data.expected_solutions = [];
+        }
+
+        // Convert score_weight to integer
+        data.score_weight = parseInt(data.score_weight);
+
+        fetch('/admin/challenge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Challenge created successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error creating challenge: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the challenge');
+            });
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('challenge-details-modal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeDetailsModal();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:5.0
+    container_name: securetrainer-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-securepassword123}
+      MONGO_INITDB_DATABASE: securetrainer
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - securetrainer-network
+    command: mongod --auth
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: securetrainer-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - securetrainer-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword123}
+
+  # SecureTrainer Web Application
+  securetrainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: securetrainer-app
+    restart: unless-stopped
+    environment:
+      # Flask Configuration
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-production-key-change-this}
+      
+      # Database Configuration
+      MONGO_URI: mongodb://securetrainer:${MONGO_PASSWORD:-mongopassword123}@mongodb:27017/securetrainer?authSource=securetrainer
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword123}@redis:6379/0
+      
+      # Email Configuration
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_USE_TLS: ${MAIL_USE_TLS:-True}
+      
+      # Security Configuration
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-supersecretadmintoken123}
+      
+      # AI Configuration
+      AI_MODEL_PATH: /app/model
+      AI_CACHE_TTL: 300
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ai_models:/app/model
+    networks:
+      - securetrainer-network
+    depends_on:
+      - mongodb
+      - redis
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: securetrainer-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - securetrainer-network
+    depends_on:
+      - securetrainer
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: securetrainer-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - securetrainer-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: securetrainer-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-grafanapassword123}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+    networks:
+      - securetrainer-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  ai_models:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  securetrainer-network:
+    driver: bridge

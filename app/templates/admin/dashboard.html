@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - SecureTrainer{% endblock %}
+
+{% block content %}
+<div class="flex flex-col space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center bg-white p-6 rounded-lg shadow-md">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+            <p class="text-gray-600">Overview of system performance and user activity</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.manage_users') }}"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                <i class="fas fa-users mr-2"></i> Manage Users
+            </a>
+            <a href="{{ url_for('admin.all_challenges') }}"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                <i class="fas fa-trophy mr-2"></i> Manage Challenges
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Users -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium uppercase">Total Users</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ data.system_statistics.total_users }}</h3>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">
+                <span class="text-green-500 font-bold"><i class="fas fa-arrow-up"></i> {{ data.recent_activity.new_users
+                    }}</span> new this week
+            </p>
+        </div>
+
+        <!-- Active Users -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium uppercase">Active Users</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ data.system_statistics.active_users_24h }}</h3>
+                </div>
+                <div class="bg-green-100 p-3 rounded-full text-green-600">
+                    <i class="fas fa-user-check text-xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">in the last 24 hours</p>
+        </div>
+
+        <!-- Challenges Completed -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium uppercase">Challenges Solved</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ data.challenge_statistics.total_completions }}
+                    </h3>
+                </div>
+                <div class="bg-purple-100 p-3 rounded-full text-purple-600">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">
+                <span class="text-green-500 font-bold"><i class="fas fa-arrow-up"></i> {{
+                    data.recent_activity.successful_attempts }}</span> this week
+            </p>
+        </div>
+
+        <!-- System Health -->
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-sm font-medium uppercase">Avg Success Rate</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-1">{{ data.challenge_statistics.avg_success_rate }}%
+                    </h3>
+                </div>
+                <div class="bg-yellow-100 p-3 rounded-full text-yellow-600">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">across all challenges</p>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Top Users -->
+        <div class="bg-white rounded-lg shadow-md lg:col-span-2">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Top Performers</h3>
+                <a href="{{ url_for('admin.manage_users') }}"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                            <th class="p-4 font-semibold">Rank</th>
+                            <th class="p-4 font-semibold">User</th>
+                            <th class="p-4 font-semibold">Department</th>
+                            <th class="p-4 font-semibold">Score</th>
+                            <th class="p-4 font-semibold">Level</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for user in data.top_users %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-4">
+                                {% if loop.index == 1 %}
+                                <span
+                                    class="bg-yellow-100 text-yellow-800 py-1 px-2 rounded-full text-xs font-bold">#1</span>
+                                {% elif loop.index == 2 %}
+                                <span
+                                    class="bg-gray-100 text-gray-800 py-1 px-2 rounded-full text-xs font-bold">#2</span>
+                                {% elif loop.index == 3 %}
+                                <span
+                                    class="bg-orange-100 text-orange-800 py-1 px-2 rounded-full text-xs font-bold">#3</span>
+                                {% else %}
+                                <span class="text-gray-500 font-medium">#{{ loop.index }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center">
+                                    <div
+                                        class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
+                                        {{ user.name[0] if user.name else 'U' }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900">{{ user.name }}</div>
+                                        <div class="text-xs text-gray-500">{{ user.get('role', 'Trainee') }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 text-sm text-gray-600">{{ user.get('department', 'N/A') }}</td>
+                            <td class="p-4 font-bold text-gray-800">{{ user.get('score', 0) }}</td>
+                            <td class="p-4">
+                                <span class="bg-blue-100 text-blue-800 py-1 px-2 rounded text-xs font-medium">Lvl {{
+                                    user.get('level', 1) }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Department Overview -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800">Department Overview</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                {% for dept in data.department_overview %}
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700">{{ dept.department }}</span>
+                        <span class="text-xs text-gray-500">{{ dept.total_users }} users</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ dept.success_rate }}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-xs text-gray-500">Success Rate</span>
+                        <span class="text-xs font-bold text-gray-700">{{ dept.success_rate }}%</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="p-4 border-t border-gray-200 text-center">
+                <a href="{{ url_for('admin.get_departments_overview') }}"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All Departments</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

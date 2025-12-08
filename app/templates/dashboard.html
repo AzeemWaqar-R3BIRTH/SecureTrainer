@@ -1,0 +1,573 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - SecureTrainer{% endblock %}
+
+{% set show_charts = True %}
+
+{% block content %}
+<!-- User Welcome Section -->
+<div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-lg p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user.username }}!</h1>
+            <p class="text-blue-100">Ready to enhance your cybersecurity skills?</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-blue-200">Member since</p>
+            <p class="text-lg font-semibold">{{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- User Statistics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Score Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Score</h3>
+                <p class="text-3xl font-bold text-gray-900" data-stat="score">{{ user.score | default(0) }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i class="fas fa-trophy text-blue-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Current Level</h3>
+                <p class="text-3xl font-bold text-gray-900" data-stat="level">{{ user.level | default(1) }}</p>
+                <p class="text-sm text-gray-600">{{ analytics.level_name }}</p>
+            </div>
+            <div class="p-3 bg-green-100 rounded-full">
+                <i class="fas fa-chart-line text-green-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Role</h3>
+                <p class="text-2xl font-bold text-gray-900" data-stat="role">{{ user.role | default('Trainee') }}</p>
+            </div>
+            <div class="p-3 bg-purple-100 rounded-full">
+                <i class="fas fa-user-shield text-purple-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challenges Completed -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Challenges</h3>
+                <p class="text-3xl font-bold text-gray-900" data-stat="challenges">{{ analytics.challenges_completed }}</p>
+                <p class="text-sm text-gray-600">Completed</p>
+            </div>
+            <div class="p-3 bg-orange-100 rounded-full">
+                <i class="fas fa-tasks text-orange-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Level Progress -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4">Level Progress</h2>
+    <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-gray-600">Level {{ user.level | default(1) }}</span>
+        <span class="text-sm font-medium text-gray-600">{{ analytics.progress_to_next_level }}% to Level {{ (user.level | default(1)) + 1 }}</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-3">
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full transition-all duration-500" 
+             style="width: {{ analytics.progress_to_next_level }}%"></div>
+    </div>
+    <div class="flex justify-between mt-2 text-sm text-gray-500">
+        <span>{{ analytics.current_level_score }} points</span>
+        <span>{{ analytics.next_level_score }} points needed</span>
+    </div>
+</div>
+
+<!-- Performance Analytics -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Score Progression Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold mb-4">Score Progression</h2>
+        <div class="h-64">
+            <canvas id="scoreChart"></canvas>
+        </div>
+        <!-- Fallback for no JavaScript -->
+        <noscript>
+            <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+                <div class="text-center">
+                    <p class="text-gray-600 mb-2">Score over last 30 days:</p>
+                    <div class="space-y-1">
+                        {% for day in analytics.recent_scores %}
+                        <div class="flex justify-between text-sm">
+                            <span>{{ day.date.strftime('%m/%d') }}</span>
+                            <span class="font-medium">{{ day.score }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </noscript>
+    </div>
+
+    <!-- Category Performance Radar Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold mb-4">Skill Assessment</h2>
+        <div class="h-64">
+            <canvas id="skillsChart"></canvas>
+        </div>
+        <!-- Fallback for no JavaScript -->
+        <noscript>
+            <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+                <div class="text-center">
+                    <p class="text-gray-600 mb-4">Category Performance:</p>
+                    <div class="space-y-3">
+                        {% for category, performance in analytics.category_performance.items() %}
+                        <div class="text-left">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">{{ category.replace('_', ' ').title() }}</span>
+                                <span class="text-sm text-gray-600">{{ performance.success_rate }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ performance.success_rate }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </noscript>
+    </div>
+</div>
+
+<!-- Additional Analytics Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Weekly Activity Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold mb-4">Weekly Activity</h2>
+        <div class="h-64">
+            <canvas id="activityChart"></canvas>
+        </div>
+        <!-- Fallback for no JavaScript -->
+        <noscript>
+            <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+                <div class="text-center text-gray-600">
+                    <p>Activity tracking chart would appear here with JavaScript enabled.</p>
+                </div>
+            </div>
+        </noscript>
+    </div>
+
+    <!-- Achievement Progress Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold mb-4">Achievement Progress</h2>
+        <div class="h-64">
+            <canvas id="achievementChart"></canvas>
+        </div>
+        <!-- Fallback for no JavaScript -->
+        <noscript>
+            <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
+                <div class="text-center">
+                    <p class="text-gray-600 mb-4">Achievements earned:</p>
+                    <div class="space-y-2">
+                        {% if user.achievements %}
+                            {% for achievement in user.achievements[-5:] %}
+                            <div class="flex items-center justify-center space-x-2">
+                                <i class="fas fa-medal text-yellow-500"></i>
+                                <span class="text-sm text-gray-700">{{ achievement }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-gray-500">
+                                <i class="fas fa-trophy text-gray-300 mb-2"></i>
+                                <p class="text-sm">No achievements yet</p>
+                                <p class="text-xs">Complete challenges to earn achievements!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </noscript>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form action="/challenges/start" method="GET" class="contents">
+            <input type="hidden" name="category" value="sql_injection">
+            <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-800 p-4 rounded-lg border border-red-200 text-left transition-colors">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-database mr-2"></i>
+                    <h3 class="font-semibold">SQL Injection</h3>
+                </div>
+                <p class="text-sm text-red-600">Test database security vulnerabilities</p>
+            </button>
+        </form>
+
+        <form action="/challenges/start" method="GET" class="contents">
+            <input type="hidden" name="category" value="xss">
+            <button type="submit" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 p-4 rounded-lg border border-yellow-200 text-left transition-colors">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-code mr-2"></i>
+                    <h3 class="font-semibold">XSS Challenges</h3>
+                </div>
+                <p class="text-sm text-yellow-600">Practice cross-site scripting defense</p>
+            </button>
+        </form>
+
+        <form action="/challenges/start" method="GET" class="contents">
+            <input type="hidden" name="category" value="command_injection">
+            <button type="submit" class="bg-purple-100 hover:bg-purple-200 text-purple-800 p-4 rounded-lg border border-purple-200 text-left transition-colors">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-terminal mr-2"></i>
+                    <h3 class="font-semibold">Command Injection</h3>
+                </div>
+                <p class="text-sm text-purple-600">Learn to prevent command attacks</p>
+            </button>
+        </form>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <a href="/challenges" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-list mr-2"></i>
+            View All Challenges
+        </a>
+    </div>
+</div>
+
+<!-- Recent Achievements -->
+{% if user.achievements and user.achievements|length > 0 %}
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-xl font-bold mb-4">Recent Achievements</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {% for achievement in user.achievements[-3:] %}
+        <div class="bg-gradient-to-r from-yellow-100 to-yellow-200 p-4 rounded-lg border border-yellow-300">
+            <div class="flex items-center mb-2">
+                <i class="fas fa-medal text-yellow-600 text-xl mr-2"></i>
+                <h3 class="font-semibold text-yellow-800">
+                    {% if achievement.name %}{{ achievement.name }}{% else %}{{ achievement }}{% endif %}
+                </h3>
+            </div>
+            <p class="text-sm text-yellow-700">
+                {% if achievement.description %}{{ achievement.description }}{% else %}Great job!{% endif %}
+            </p>
+            {% if achievement.earned_date %}
+            <p class="text-xs text-yellow-600 mt-2">Earned {{ achievement.earned_date.strftime('%B %d, %Y') }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Learning Resources -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold mb-4">Cybersecurity Learning Hub</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <h3 class="font-semibold text-gray-800">Recommended Topics</h3>
+            {% for topic in analytics.recommended_topics %}
+            <div class="border-l-4 border-blue-500 pl-4">
+                <h4 class="font-medium text-gray-900">{{ topic.title }}</h4>
+                <p class="text-sm text-gray-600">{{ topic.description }}</p>
+                <a href="/learning-center/{{ topic.slug }}" class="text-blue-600 hover:text-blue-800 text-sm">Learn more →</a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="space-y-4">
+            <h3 class="font-semibold text-gray-800">Quick Tips</h3>
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h4 class="font-medium text-blue-800">Daily Security Tip</h4>
+                <p class="text-sm text-blue-700 mt-1">{{ analytics.daily_tip }}</p>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg">
+                <h4 class="font-medium text-green-800">Your Progress</h4>
+                <p class="text-sm text-green-700 mt-1">You've improved your security awareness by {{ analytics.improvement_percentage }}% this month!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Chart.js Dashboard Analytics
+document.addEventListener('DOMContentLoaded', function() {
+    // Color scheme for charts
+    const colors = {
+        primary: 'rgb(59, 130, 246)',
+        secondary: 'rgb(16, 185, 129)',
+        accent: 'rgb(245, 158, 11)',
+        danger: 'rgb(239, 68, 68)',
+        purple: 'rgb(139, 92, 246)',
+        indigo: 'rgb(99, 102, 241)'
+    };
+
+    // Initialize Score Progression Chart
+    const scoreCtx = document.getElementById('scoreChart');
+    if (scoreCtx) {
+        new Chart(scoreCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.chart_labels | tojson | safe }},
+                datasets: [{
+                    label: 'Score',
+                    data: {{ analytics.chart_scores | tojson | safe }},
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: colors.primary,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: colors.primary,
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    }
+
+    // Initialize Skills Radar Chart
+    const skillsCtx = document.getElementById('skillsChart');
+    if (skillsCtx) {
+        const categoryData = {{ analytics.category_performance | tojson | safe }};
+        const categories = Object.keys(categoryData);
+        const successRates = Object.values(categoryData).map(perf => perf.success_rate || 0);
+
+        new Chart(skillsCtx, {
+            type: 'radar',
+            data: {
+                labels: categories.map(cat => cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())),
+                datasets: [{
+                    label: 'Success Rate (%)',
+                    data: successRates,
+                    borderColor: colors.secondary,
+                    backgroundColor: colors.secondary + '30',
+                    borderWidth: 2,
+                    pointBackgroundColor: colors.secondary,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        angleLines: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        pointLabels: {
+                            color: '#6b7280',
+                            font: {
+                                size: 12
+                            }
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            stepSize: 20
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Weekly Activity Chart
+    const activityCtx = document.getElementById('activityChart');
+    if (activityCtx) {
+        // Generate mock weekly activity data
+        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const activityData = [{{ user.level or 1 }}, {{ (user.level or 1) + 2 }}, {{ (user.level or 1) + 1 }}, {{ (user.level or 1) + 3 }}, {{ (user.level or 1) + 2 }}, {{ (user.level or 1) + 1 }}, {{ user.level or 1 }}];
+
+        new Chart(activityCtx, {
+            type: 'bar',
+            data: {
+                labels: weekDays,
+                datasets: [{
+                    label: 'Challenges Completed',
+                    data: activityData,
+                    backgroundColor: colors.accent + '80',
+                    borderColor: colors.accent,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize Achievement Progress Chart
+    const achievementCtx = document.getElementById('achievementChart');
+    if (achievementCtx) {
+        const totalAchievements = 15; // Total possible achievements
+        const earnedAchievements = {{ user.achievements | length if user.achievements else 0 }};
+        const progress = (earnedAchievements / totalAchievements) * 100;
+
+        new Chart(achievementCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Earned', 'Remaining'],
+                datasets: [{
+                    data: [earnedAchievements, totalAchievements - earnedAchievements],
+                    backgroundColor: [colors.purple + '80', '#e5e7eb'],
+                    borderColor: [colors.purple, '#d1d5db'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#6b7280',
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
+            },
+            plugins: [{
+                beforeDraw: function(chart) {
+                    const width = chart.width,
+                          height = chart.height,
+                          ctx = chart.ctx;
+                    
+                    ctx.restore();
+                    const fontSize = (height / 114).toFixed(2);
+                    ctx.font = fontSize + "em sans-serif";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = '#6b7280';
+                    
+                    const text = `${Math.round(progress)}%`;
+                    const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                    const textY = height / 2;
+                    
+                    ctx.fillText(text, textX, textY);
+                    ctx.save();
+                }
+            }]
+        });
+    }
+    
+    // Auto-refresh dashboard data every 5 minutes
+    setInterval(function() {
+        fetch('/dashboard/refresh')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update score and level displays
+                    const scoreElements = document.querySelectorAll('[data-score]');
+                    const levelElements = document.querySelectorAll('[data-level]');
+                    scoreElements.forEach(el => el.textContent = data.score);
+                    levelElements.forEach(el => el.textContent = data.level);
+                }
+            })
+            .catch(error => console.log('Dashboard refresh failed:', error));
+    }, 300000); // 5 minutes
+});
+</script>
+{% endblock %}

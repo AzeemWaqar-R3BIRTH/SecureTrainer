@@ -1,0 +1,655 @@
+{% extends 'base.html' %}
+
+{% block title %}Challenges - SecureTrainer{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg p-6 mb-8">
+    <div class="text-center">
+        <h1 class="text-3xl font-bold mb-2">
+            <i class="fas fa-trophy text-yellow-300 mr-3"></i>
+            Cybersecurity Challenges
+        </h1>
+        <p class="text-blue-100">Test your skills with hands-on cybersecurity scenarios</p>
+    </div>
+</div>
+
+<!-- Challenge Categories Grid -->
+<div id="challenge-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- SQL Injection -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+        <div class="bg-red-600 text-white p-4">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-database mr-3"></i>
+                SQL Injection
+            </h2>
+        </div>
+        <div class="p-6 flex-grow flex flex-col justify-between">
+            <div>
+                <p class="text-gray-600 mb-4 text-sm">Learn to identify and exploit SQL injection vulnerabilities in
+                    database-driven applications.</p>
+<div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span class="font-bold">{{ category_stats.sql_injection.percent }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-red-600 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ category_stats.sql_injection.percent }}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">{{ category_stats.sql_injection.completed }}/{{ category_stats.sql_injection.total }} completed</p>
+                        {% if category_stats.sql_injection.percent == 100 %}
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <button onclick="startChallengeCategory('sql_injection')"
+                class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
+                Start SQL Challenges
+            </button>
+        </div>
+    </div>
+
+    <!-- XSS -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+        <div class="bg-yellow-600 text-white p-4">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-code mr-3"></i>
+                Cross-Site Scripting
+            </h2>
+        </div>
+        <div class="p-6 flex-grow flex flex-col justify-between">
+            <div>
+                <p class="text-gray-600 mb-4 text-sm">Master XSS attack techniques and learn how to prevent malicious
+                    script injection.</p>
+<div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span class="font-bold">{{ category_stats.xss.percent }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-yellow-600 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ category_stats.xss.percent }}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">{{ category_stats.xss.completed }}/{{ category_stats.xss.total }} completed</p>
+                        {% if category_stats.xss.percent == 100 %}
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <button onclick="startChallengeCategory('xss')"
+                class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
+                Start XSS Challenges
+            </button>
+        </div>
+    </div>
+
+    <!-- Command Injection -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+        <div class="bg-purple-600 text-white p-4">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-terminal mr-3"></i>
+                Command Injection
+            </h2>
+        </div>
+        <div class="p-6 flex-grow flex flex-col justify-between">
+            <div>
+                <p class="text-gray-600 mb-4 text-sm">Explore OS command injection vulnerabilities and learn defense
+                    strategies.</p>
+<div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span class="font-bold">{{ category_stats.command_injection.percent }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ category_stats.command_injection.percent }}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">{{ category_stats.command_injection.completed }}/{{ category_stats.command_injection.total }} completed</p>
+                        {% if category_stats.command_injection.percent == 100 %}
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <button onclick="startChallengeCategory('command_injection')"
+                class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
+                Start Command Challenges
+            </button>
+        </div>
+    </div>
+
+    <!-- Authentication -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+        <div class="bg-blue-600 text-white p-4">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-lock mr-3"></i>
+                Authentication
+            </h2>
+        </div>
+        <div class="p-6 flex-grow flex flex-col justify-between">
+            <div>
+                <p class="text-gray-600 mb-4 text-sm">Practice authentication bypass techniques and learn secure
+                    authentication methods.</p>
+<div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span class="font-bold">{{ category_stats.authentication.percent }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ category_stats.authentication.percent }}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">{{ category_stats.authentication.completed }}/{{ category_stats.authentication.total }} completed</p>
+                        {% if category_stats.authentication.percent == 100 %}
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <button onclick="startChallengeCategory('authentication')"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
+                Start Auth Challenges
+            </button>
+        </div>
+    </div>
+
+    <!-- CSRF -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+        <div class="bg-green-600 text-white p-4">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-shield-alt mr-3"></i>
+                CSRF
+            </h2>
+        </div>
+        <div class="p-6 flex-grow flex flex-col justify-between">
+            <div>
+                <p class="text-gray-600 mb-4 text-sm">Understand Cross-Site Request Forgery attacks and protection
+                    mechanisms.</p>
+<div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span class="font-bold">{{ category_stats.csrf.percent }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-600 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ category_stats.csrf.percent }}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500">{{ category_stats.csrf.completed }}/{{ category_stats.csrf.total }} completed</p>
+                        {% if category_stats.csrf.percent == 100 %}
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <button onclick="startChallengeCategory('csrf')"
+                class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
+                Start CSRF Challenges
+            </button>
+        </div>
+    </div>
+
+    <!-- Random Challenge -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden border-2 border-blue-300 flex flex-col h-full">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+            <h2 class="text-xl font-bold flex items-center">
+                <i class="fas fa-random mr-3"></i>
+                Random Challenge
+            </h2>
+        </div>
+        <div class="p-6 flex-grow flex flex-col justify-between text-center">
+            <div>
+                <p class="text-gray-600 mb-4 text-sm">Let us pick a challenge for you based on your skill level and
+                    learning progress.</p>
+                <div class="mb-4 flex justify-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-dice text-xl text-blue-600"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">Adaptive difficulty</p>
+            </div>
+            <button onclick="startChallengeCategory('random')"
+                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
+                Surprise Me!
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Challenge Interface Container (Hidden by default) -->
+<div id="current-challenge-section" class="hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 id="challenge-title" class="text-2xl font-bold text-gray-800 mb-2">Challenge Title</h2>
+                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                    <span class="flex items-center">
+                        <i class="fas fa-signal mr-1"></i>
+                        Difficulty: <span id="challenge-difficulty"
+                            class="ml-1 px-2 py-1 rounded bg-blue-100 text-blue-800">Intermediate</span>
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-trophy mr-1"></i>
+                        Points: <span id="challenge-points">100</span>
+                    </span>
+                </div>
+            </div>
+            <button onclick="backToChallenges()"
+                class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Challenges
+            </button>
+        </div>
+
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-3">Challenge Description</h3>
+            <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p id="challenge-scenario" class="text-blue-800 mb-3">Challenge scenario will appear here...</p>
+                <p id="challenge-question" class="text-blue-700 font-medium">Challenge question will appear here...</p>
+            </div>
+        </div>
+
+        <div id="challenge-interface">
+            <!-- Challenge interface will be dynamically loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Learning Resources -->
+<div class="bg-white rounded-lg shadow-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-graduation-cap text-blue-600 mr-3"></i>
+        Learning Resources
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Tips</h3>
+            <div class="space-y-3">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-lightbulb text-blue-600 text-xs"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Start with beginner challenges to build foundational knowledge</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-target text-green-600 text-xs"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Focus on understanding the vulnerability, not just the exploit</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-purple-600 text-xs"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">Always consider defense mechanisms and prevention techniques</p>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">External Resources</h3>
+            <div class="space-y-2">
+                <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener"
+                    class="block text-blue-600 hover:text-blue-800 text-sm">
+                    <i class="fas fa-external-link-alt mr-2"></i>
+                    OWASP Top 10
+                </a>
+                <a href="https://portswigger.net/web-security" target="_blank" rel="noopener"
+                    class="block text-blue-600 hover:text-blue-800 text-sm">
+                    <i class="fas fa-external-link-alt mr-2"></i>
+                    PortSwigger Web Security Academy
+                </a>
+                <a href="https://cheatsheetseries.owasp.org/" target="_blank" rel="noopener"
+                    class="block text-blue-600 hover:text-blue-800 text-sm">
+                    <i class="fas fa-external-link-alt mr-2"></i>
+                    OWASP Cheat Sheets
+                </a>
+                <a href="/learning-center" class="block text-blue-600 hover:text-blue-800 text-sm">
+                    <i class="fas fa-book mr-2"></i>
+                    SecureTrainer Learning Center
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .challenge-container {
+        min-height: 500px;
+    }
+
+    .terminal {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        font-family: 'Courier New', monospace;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+
+    .terminal-input {
+        background-color: transparent;
+        border: none;
+        color: #f0f0f0;
+        font-family: 'Courier New', monospace;
+        width: 100%;
+        outline: none;
+    }
+
+    .terminal-prefix {
+        color: #50fa7b;
+    }
+
+    .hint-box {
+        background-color: #fffbea;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .code-box {
+        background-color: #282c34;
+        color: #abb2bf;
+        font-family: 'Courier New', monospace;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+
+    .challenge-type-sql {
+        border-left: 4px solid #ef4444;
+    }
+
+    .challenge-type-xss {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .challenge-type-cmd {
+        border-left: 4px solid #8b5cf6;
+    }
+
+    .challenge-type-auth {
+        border-left: 4px solid #06b6d4;
+    }
+
+    .challenge-type-csrf {
+        border-left: 4px solid #10b981;
+    }
+
+    /* Interactive Demo Styles */
+    .demo-container {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+    }
+
+    .demo-container h4 {
+        color: #495057;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    .terminal-input-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .terminal-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #f0f0f0;
+        font-family: 'Courier New', monospace;
+        outline: none;
+    }
+
+    .terminal-prefix {
+        color: #50fa7b;
+        font-weight: bold;
+    }
+
+    .success {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .error {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .warning {
+        color: #ffc107;
+        font-weight: 600;
+    }
+
+    .info {
+        color: #17a2b8;
+        font-weight: 600;
+    }
+
+    .common-passwords ul {
+        list-style-type: disc;
+        margin-left: 20px;
+    }
+
+    .common-passwords li {
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
+
+    .attack-log {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+
+    .attack-log h5 {
+        margin-bottom: 10px;
+        color: #495057;
+    }
+
+    .attack-step {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .token-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 4px;
+        padding: 15px;
+        margin: 10px 0;
+    }
+
+    .token-info code {
+        background: #f5f5f5;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+    }
+
+    .session-info {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .session-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .session-actions button {
+        padding: 8px 16px;
+        border: 1px solid #007bff;
+        background: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .session-actions button:hover {
+        background: #0056b3;
+    }
+
+    .challenge-demo {
+        margin-top: 20px;
+    }
+
+    .challenge-demo iframe {
+        width: 100%;
+        height: 400px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+
+    .challenge-card {
+        transition: all 0.3s ease;
+    }
+
+    .challenge-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .difficulty-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+    }
+
+    .difficulty-beginner {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .difficulty-intermediate {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .difficulty-advanced {
+        background-color: #fecaca;
+        color: #991b1b;
+    }
+
+    .difficulty-expert {
+        background-color: #f3e8ff;
+        color: #581c87;
+    }
+</style>
+
+<!-- User data for JavaScript -->
+<script type="application/json" id="user-data">
+{% if user %}
+{
+    "id": "{{ user._id }}",
+    "user_id": "{{ user._id }}",
+    "username": "{{ user.username }}",
+    "level": {{ user.level | default(1) }},
+    "score": {{ user.score | default(0) }},
+    "role": "{{ user.role | default('Trainee') }}"
+}
+{% else %}
+null
+{% endif %}
+</script>
+
+<!-- Progress Stats Data -->
+<script type="application/json" id="progress-stats">
+{
+    "sql_injection": {{ category_stats.sql_injection | tojson }},
+    "xss": {{ category_stats.xss | tojson }},
+    "command_injection": {{ category_stats.command_injection | tojson }},
+    "authentication": {{ category_stats.authentication | tojson }},
+    "csrf": {{ category_stats.csrf | tojson }}
+}
+</script>
+
+<!-- Debug Progress Bars -->
+<script>
+    // Log progress bar data for debugging
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressData = JSON.parse(document.getElementById('progress-stats').textContent);
+        
+        console.log('%c========== PROGRESS BAR DATA ==========', 'color: #4CAF50; font-weight: bold; font-size: 14px');
+        console.log('Loaded at:', new Date().toLocaleString());
+        console.log('');
+        
+        Object.keys(progressData).forEach(category => {
+            const data = progressData[category];
+            const emoji = data.percent === 100 ? '✅' : (data.percent >= 50 ? '⏳' : '📝');
+            console.log(`%c${emoji} ${category.toUpperCase().replace('_', ' ')}`, 'font-weight: bold');
+            console.log(`   Completed: ${data.completed}/${data.total}`);
+            console.log(`   Progress: ${data.percent}%`);
+            console.log('');
+        });
+        
+        console.log('%c========================================', 'color: #4CAF50; font-weight: bold');
+        
+        // Check for progress update flag
+        const progressUpdated = sessionStorage.getItem('progressUpdated');
+        if (progressUpdated === 'true') {
+            console.log('%c🔄 Progress bars refreshed after challenge completion', 'color: #2196F3; font-weight: bold');
+            sessionStorage.removeItem('progressUpdated');
+        }
+    });
+</script>
+
+<!-- Demo configuration -->
+<script src="{{ url_for('static', filename='js/demo-config.js') }}"></script>
+
+<!-- Challenge Handler v2.1 - Clean Implementation -->
+<script src="{{ url_for('static', filename='js/challenge-handler.js') }}?v=3.5"></script>
+<script src="{{ url_for('static', filename='js/challenge-fix.js') }}?v=3.6"></script>
+{% endblock %}
