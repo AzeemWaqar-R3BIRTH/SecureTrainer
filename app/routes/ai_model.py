@@ -252,43 +252,61 @@ def generate_adaptive_hint(user, challenge, attempt_count):
             return f"{base_hint} Look for patterns in the payload and think about the attack vector."
     else:
         # Very specific hint
-        return f"Try this specific approach: {challenge.get('answer', '')[:100]}..."
+        return f"Try this specific approach: {challenge.get('answer', '')}"
 
 def predict_user_success_probability(user, challenge):
     """Predict the probability of user successfully completing a challenge."""
     try:
-        if not load_ml_model():
-            return 0.5  # Default probability
-        
-        # Extract features
-        features = extract_user_features(user)
-        
-        # Get challenge difficulty
-        challenge_difficulty = challenge.get('difficulty', 'intermediate').lower()
-        
-        # Adjust features based on challenge difficulty
-        difficulty_weights = {
-            'beginner': 1.0,
-            'intermediate': 0.8,
-            'advanced': 0.6,
-            'expert': 0.4
-        }
-        
-        weight = difficulty_weights.get(challenge_difficulty, 0.7)
-        
-        # Simple probability calculation based on user level vs challenge difficulty
-        user_level = user.get('level', 1)
-        difficulty_levels = {'beginner': 1, 'intermediate': 3, 'advanced': 6, 'expert': 9}
-        challenge_level = difficulty_levels.get(challenge_difficulty, 3)
-        
-        # Calculate success probability
-        level_diff = user_level - challenge_level
-        base_probability = 0.5 + (level_diff * 0.1)
-        base_probability = max(0.1, min(0.9, base_probability))  # Clamp between 0.1 and 0.9
-        
-        # Apply weight and return
-        return base_probability * weight
-        
+        # Try to use ML model if available
+        if load_ml_model():
+            # Extract features
+            features = extract_user_features(user)
+            
+            # Get challenge difficulty
+            challenge_difficulty = challenge.get('difficulty', 'intermediate').lower()
+            
+            # Adjust features based on challenge difficulty
+            difficulty_weights = {
+                'beginner': 1.0,
+                'intermediate': 0.8,
+                'advanced': 0.6,
+                'expert': 0.4
+            }
+            
+            weight = difficulty_weights.get(challenge_difficulty, 0.7)
+            
+            # Simple probability calculation based on user level vs challenge difficulty
+            user_level = user.get('level', 1)
+            difficulty_levels = {'beginner': 1, 'intermediate': 3, 'advanced': 6, 'expert': 9}
+            challenge_level = difficulty_levels.get(challenge_difficulty, 3)
+            
+            # Calculate success probability
+            level_diff = user_level - challenge_level
+            base_probability = 0.5 + (level_diff * 0.1)
+            base_probability = max(0.1, min(0.9, base_probability))  # Clamp between 0.1 and 0.9
+            
+            # Apply weight and return
+            return base_probability * weight
+        else:
+            # Fallback heuristic calculation
+            user_level = user.get('level', 1)
+            challenge_difficulty = challenge.get('difficulty', 'intermediate').lower()
+            
+            difficulty_levels = {'beginner': 1, 'intermediate': 3, 'advanced': 6, 'expert': 9}
+            challenge_level = difficulty_levels.get(challenge_difficulty, 3)
+            
+            # Calculate probability based on level difference
+            # Level 1 user vs Level 1 challenge = 0.6
+            # Level 1 user vs Level 3 challenge = 0.4
+            level_diff = user_level - challenge_level
+            probability = 0.6 + (level_diff * 0.1)
+            
+            # Adjust based on success rate
+            success_rate = user.get('success_rate', 0.5)
+            probability += (success_rate - 0.5) * 0.2
+            
+            return max(0.1, min(0.95, probability))
+            
     except Exception as e:
         print(f"Error predicting success probability: {e}")
         return 0.5
@@ -554,19 +572,12 @@ def get_achievement_recommendations(user):
 
 
 def get_adaptive_challenge_sequence(user, category=None, count=5):
-    """Generate adaptive challenge sequence based on learning progression.
-    
-    FILTERS OUT ALREADY-COMPLETED CHALLENGES.
-    """
+    """Generate adaptive challenge sequence based on learning progression."""
     sequence = []
     
     try:
         from app.models.challenge_model import get_challenges_by_category, get_challenges_by_difficulty, get_all_challenges
         from app.models.analytics_model import get_learning_patterns
-        
-        # Get user's completed challenges
-        completed_challenges = user.get('challenges_completed', [])
-        print(f"User has completed {len(completed_challenges)} challenges: {completed_challenges}")
         
         patterns = get_learning_patterns(str(user['_id']))
         current_difficulty = patterns.get('optimal_difficulty', 'beginner')
@@ -584,28 +595,19 @@ def get_adaptive_challenge_sequence(user, category=None, count=5):
             # For random or no category, use all challenges
             base_challenges = get_all_challenges()
         
-        # CRITICAL: Filter out already-completed challenges
-        uncompleted_challenges = [
-            c for c in base_challenges 
-            if c.get('id') not in completed_challenges
-        ]
-        
-        print(f"Category '{category}': {len(base_challenges)} total, {len(uncompleted_challenges)} uncompleted")
-        
-        # If all challenges completed in this category, inform user
-        if not uncompleted_challenges:
-            print(f"All challenges completed for category '{category}'!")
-            return []  # Return empty to indicate completion
-        
-        # Filter by appropriate difficulty from UNCOMPLETED challenges
+        # Filter by appropriate difficulty
         filtered_challenges = [
-            c for c in uncompleted_challenges 
+            c for c in base_challenges 
             if c.get('difficulty', '').lower() == current_difficulty
         ]
         
-        # If no challenges match current difficulty, use all uncompleted challenges for the category
+        # Filter out completed challenges
+        completed_challenges = user.get('challenges_completed', [])
+        filtered_challenges = [c for c in filtered_challenges if c['id'] not in completed_challenges]
+        
+        # If no challenges match current difficulty (or all completed), use all uncompleted challenges for the category
         if not filtered_challenges:
-            filtered_challenges = uncompleted_challenges
+            filtered_challenges = [c for c in base_challenges if c['id'] not in completed_challenges]
         
         # Add some variety with adjacent difficulty levels if we have too few challenges
         if len(filtered_challenges) < count:
@@ -615,7 +617,7 @@ def get_adaptive_challenge_sequence(user, category=None, count=5):
             # Add easier challenges if user is struggling
             if patterns.get('success_rate', 0) < 60 and current_index > 0:
                 easier_challenges = [
-                    c for c in uncompleted_challenges 
+                    c for c in base_challenges 
                     if c.get('difficulty', '').lower() == difficulty_levels[current_index - 1]
                 ]
                 filtered_challenges.extend(easier_challenges[:2])
@@ -623,7 +625,7 @@ def get_adaptive_challenge_sequence(user, category=None, count=5):
             # Add harder challenges if user is excelling
             if patterns.get('success_rate', 0) > 80 and current_index < len(difficulty_levels) - 1:
                 harder_challenges = [
-                    c for c in uncompleted_challenges 
+                    c for c in base_challenges 
                     if c.get('difficulty', '').lower() == difficulty_levels[current_index + 1]
                 ]
                 filtered_challenges.extend(harder_challenges[:1])
@@ -632,20 +634,11 @@ def get_adaptive_challenge_sequence(user, category=None, count=5):
         random.shuffle(filtered_challenges)
         sequence = filtered_challenges[:count]
         
-        print(f"Returning {len(sequence)} uncompleted challenges")
-        
     except Exception as e:
         print(f"Error generating adaptive sequence: {e}")
-        import traceback
-        traceback.print_exc()
         # Fallback to simple selection
         from app.models.challenge_model import get_all_challenges
         all_challenges = get_all_challenges()
-        
-        # Filter out completed challenges in fallback too
-        completed_challenges = user.get('challenges_completed', [])
-        all_challenges = [c for c in all_challenges if c.get('id') not in completed_challenges]
-        
         # If category is specified and not random, filter by category
         if category and category != 'random':
             all_challenges = [c for c in all_challenges if c.get('type', '').lower() == category.lower()]

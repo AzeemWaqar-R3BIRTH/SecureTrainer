@@ -438,57 +438,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize charts
     initializeDashboardCharts();
     
-    // Check if user just completed a challenge
-    const justCompleted = sessionStorage.getItem('challengeJustCompleted');
-    if (justCompleted === 'true') {
-        console.log('Challenge just completed - refreshing dashboard data');
-        
-        // Clear the flag
-        sessionStorage.removeItem('challengeJustCompleted');
-        
-        // Show success message
-        const scoreEarned = sessionStorage.getItem('lastCompletedScore') || '0';
-        const challengeId = sessionStorage.getItem('lastCompletedChallenge') || '';
-        
-        // Clear temp data
-        sessionStorage.removeItem('lastCompletedScore');
-        sessionStorage.removeItem('lastCompletedChallenge');
-        
-        // Show notification
-        showDashboardNotification(`🎉 Challenge completed! +${scoreEarned} points added to your score.`, 'success');
-        
-        // Refresh dashboard data
-        setTimeout(() => {
-            refreshDashboardData();
-        }, 500);
-    }
-    
     console.log('Dashboard initialized successfully');
 });
-
-/**
- * Show dashboard notification
- */
-function showDashboardNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 animate-slide-in`;
-    
-    const colors = {
-        'info': 'bg-blue-500 text-white',
-        'success': 'bg-green-500 text-white',
-        'error': 'bg-red-500 text-white',
-        'warning': 'bg-yellow-500 text-black'
-    };
-    
-    notification.className += ` ${colors[type] || colors.info}`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
-}

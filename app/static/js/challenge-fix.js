@@ -133,34 +133,6 @@ function startChallengeCategory(category) {
         if (data.success && data.challenge) {
             showMessage('Challenge loaded successfully!', 'success');
             loadChallenge(data.challenge);
-        } else if (data.all_completed) {
-            // User has completed all challenges in this category
-            showMessage(data.message || '🎉 All challenges completed!', 'success');
-            
-            // Show completion message in the challenge area
-            const challengeArea = document.getElementById('challenge-area');
-            if (challengeArea) {
-                challengeArea.innerHTML = `
-                    <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-8 text-center">
-                        <div class="text-6xl mb-4">🎉</div>
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Congratulations!</h2>
-                        <p class="text-xl text-gray-700 mb-6">${data.message}</p>
-                        <div class="bg-white rounded-lg p-6 mb-6 inline-block">
-                            <p class="text-lg text-gray-600 mb-2">Challenges Completed</p>
-                            <p class="text-5xl font-bold text-green-600">${data.completed_count || 0}</p>
-                        </div>
-                        <div class="flex gap-4 justify-center">
-                            <a href="/challenges" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200">
-                                Try Another Category
-                            </a>
-                            <a href="/dashboard" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200">
-                                View Dashboard
-                            </a>
-                        </div>
-                    </div>
-                `;
-            }
-            return; // Stop execution here
         } else {
             throw new Error(data.error || 'Failed to load challenge');
         }
@@ -177,16 +149,6 @@ function startChallengeCategory(category) {
 
 function loadChallenge(challengeData) {
     currentChallenge = challengeData;
-    
-    // Debug: Log the challenge data to see what's included
-    console.log('📝 Challenge loaded:', {
-        id: challengeData.id,
-        category: challengeData.category,
-        difficulty: challengeData.difficulty,
-        hasHint: !!challengeData.hint,
-        hint: challengeData.hint,
-        hintLength: challengeData.hint ? challengeData.hint.length : 0
-    });
     
     // Hide challenge categories
     const categoriesSection = document.querySelector('main .grid') || 
@@ -234,21 +196,10 @@ function updateChallengeDisplay(challengeData) {
         questionEl.textContent = challengeData.question || 'Challenge question';
     }
     
-    // Update points with range
+    // Update points
     const pointsEl = document.getElementById('challenge-points');
     if (pointsEl) {
-        const baseScore = (challengeData.score_weight || 10);
-        const difficultyMultipliers = {
-            'beginner': 1.0,
-            'intermediate': 1.5,
-            'advanced': 2.2,
-            'expert': 3.0
-        };
-        const difficulty = (challengeData.difficulty || 'intermediate').toLowerCase();
-        const diffMultiplier = difficultyMultipliers[difficulty] || 1.5;
-        const minScore = Math.round(baseScore * diffMultiplier * 0.3);
-        const maxScore = Math.round(baseScore * diffMultiplier * 3.5);
-        pointsEl.textContent = `${minScore}-${maxScore}`;
+        pointsEl.textContent = (challengeData.score_weight || 10) * 10;
     }
     
     // Create challenge interface
@@ -289,7 +240,8 @@ function createBasicInterface(challengeData) {
                     id="user-answer" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
                     rows="4" 
-                    placeholder="Explain what this payload does and how it works..."></textarea>
+                    placeholder="Explain what this payload does and how it works...">
+                </textarea>
             </div>
             
             <div class="flex space-x-4">
@@ -301,11 +253,9 @@ function createBasicInterface(challengeData) {
                 </button>
             </div>
             
-            <div id="hint-display" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md" style="display: none; max-width: 100%; width: 100%;">
-                <h4 class="font-medium text-yellow-800 mb-2">
-                    <i class="fas fa-lightbulb mr-2"></i>💡 Hint:
-                </h4>
-                <p class="text-yellow-700 whitespace-pre-wrap break-words overflow-wrap-anywhere" id="hint-text" style="word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; max-width: 100%; text-overflow: clip; overflow: visible;"></p>
+            <div id="hint-display" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md" style="display: none;">
+                <h4 class="font-medium text-yellow-800 mb-2">Hint:</h4>
+                <p class="text-yellow-700" id="hint-text"></p>
             </div>
         </div>
     `;
@@ -375,52 +325,18 @@ function submitAnswer() {
 }
 
 function showHint() {
-    if (!currentChallenge) {
-        console.error('No challenge loaded');
-        return;
-    }
+    if (!currentChallenge) return;
     
     const hintDisplay = document.getElementById('hint-display');
     const hintText = document.getElementById('hint-text');
     
-    if (!hintDisplay || !hintText) {
-        console.error('Hint elements not found');
-        return;
-    }
+    if (!hintDisplay || !hintText) return;
     
     if (hintDisplay.style.display === 'none') {
-        // Get the hint directly from the challenge (already safe from backend)
-        const hint = currentChallenge.hint || 'Think about the vulnerability type and how it can be exploited.';
-        console.log('Displaying hint:', hint);
-        
-        // Set hint text directly (no need for escapeHtml since backend already sanitizes)
-        hintText.textContent = hint;
-        
-        // Force full display with cssText override (equivalent to !important)
-        hintText.style.cssText = `
-            color: rgb(161, 98, 7);
-            overflow: visible !important;
-            text-overflow: clip !important;
-            white-space: pre-wrap !important;
-            word-wrap: break-word !important;
-            word-break: break-word !important;
-            overflow-wrap: break-word !important;
-            display: block !important;
-            max-height: none !important;
-            height: auto !important;
-            max-width: 100% !important;
-            -webkit-line-clamp: unset !important;
-            line-clamp: unset !important;
-        `;
-        // Also ensure parent container doesn't constrain
-        const hintDisplayClasses = hintDisplay.className;
-        hintDisplay.style.cssText = `
-            display: block !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            overflow: visible !important;
-        `;
-        hintDisplay.className = hintDisplayClasses; // Preserve classes
+        // Safely set hint text without allowing HTML execution
+        const safeHint = escapeHtml(currentChallenge.hint || 'Think about the vulnerability type and how it can be exploited.');
+        hintText.textContent = safeHint;
+        hintDisplay.style.display = 'block';
     } else {
         hintDisplay.style.display = 'none';
     }

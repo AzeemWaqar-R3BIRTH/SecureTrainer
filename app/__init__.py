@@ -46,25 +46,23 @@ def create_app():
         from app.routes.learning import learning_bp
         from app.routes.leaderboard import leaderboard_bp
         
-        # Admin routes
-        from app.routes.admin import admin_bp
-        
         # Enhanced validation system
         from app.routes.enhanced_validation_api import enhanced_validation_bp
         
-        # ML Training routes
+        # Admin and ML routes
+        from app.routes.admin import admin_bp
         from app.routes.ml_routes import ml_bp
         
         # Register all blueprints
         app.register_blueprint(pages_bp)  # Register pages first (handles root routes)
         app.register_blueprint(auth_bp)
         app.register_blueprint(dashboard_bp)
-        app.register_blueprint(challenge_bp, url_prefix='/api/challenges')
+        app.register_blueprint(challenge_bp)
         app.register_blueprint(learning_bp)
-        app.register_blueprint(leaderboard_bp, url_prefix='/api/leaderboard')
-        app.register_blueprint(admin_bp)  # Admin routes with /admin prefix
+        app.register_blueprint(leaderboard_bp)
         app.register_blueprint(enhanced_validation_bp)
-        app.register_blueprint(ml_bp)  # ML training routes
+        app.register_blueprint(admin_bp)
+        app.register_blueprint(ml_bp)
         
         logging.info("All blueprints registered successfully")
         

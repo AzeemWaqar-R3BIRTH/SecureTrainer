@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %}
+{% extends "base.html" %}
 
 {% block title %}ML Model Management - SecureTrainer{% endblock %}
 
@@ -87,7 +87,19 @@
     async function loadModelStatus() {
         try {
             const response = await fetch('/api/ml/status');
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Authentication required. Please log in as admin.');
+            }
+            
             const data = await response.json();
+            
+            // Check for auth errors
+            if (!data.success && (response.status === 401 || response.status === 403)) {
+                throw new Error(data.error || 'Authentication required');
+            }
 
             const statusDiv = document.getElementById('model-status');
 
@@ -186,6 +198,13 @@
 
         try {
             const response = await fetch('/api/ml/export-data', { method: 'POST' });
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Authentication required. Please log in as admin.');
+            }
+            
             const data = await response.json();
 
             if (data.success) {

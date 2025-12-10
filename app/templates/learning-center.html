@@ -87,9 +87,9 @@
                 <div class="nav-header">
                     <h3>Learning Modules</h3>
                     <div class="nav-progress">
-                        <span id="nav-progress-text">0 of 7 completed</span>
+                        <span id="nav-progress-text">3 of 6 completed</span>
                         <div class="nav-progress-bar">
-                            <div class="nav-progress-fill" id="nav-progress-fill" style="width: 0%"></div>
+                            <div class="nav-progress-fill" style="width: 50%"></div>
                         </div>
                     </div>
                 </div>
@@ -438,13 +438,13 @@
             </div>
 
             <!-- Content Navigation -->
-            <div class="content-navigation">
+            <div class="content-navigation" style="display: none;">
                 <button id="prev-content" class="nav-button prev-button" style="display: none;">
                     <i class="fas fa-chevron-left"></i>
                     <span>Previous</span>
                 </button>
 
-                <div class="content-progress">
+                <div class="content-progress" style="display: none;">
                     <div class="progress-indicator">
                         <div class="progress-dots">
                             <div class="progress-dot active"></div>
@@ -1003,7 +1003,7 @@
     }
 
     .nav-progress-indicator {
-        display: flex;
+        display: none; /* Hidden to simplify UI */
         gap: 0.25rem;
     }
 
@@ -1943,6 +1943,43 @@
             padding: 1rem;
         }
     }
+
+    /* Checkbox Styles */
+    .checkbox-container .section-checkbox:checked + .checkbox-visual {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+
+    .checkbox-container:hover .checkbox-visual {
+        border-color: #60a5fa;
+    }
+
+    .checkbox-visual {
+        transition: all 0.2s ease;
+    }
+
+    .checkbox-container .section-checkbox:checked ~ span {
+        color: #059669;
+    }
+
+    /* Prose text formatting for content */
+    .prose {
+        max-width: none;
+        line-height: 1.75;
+    }
+
+    .prose p {
+        margin-bottom: 1.25rem;
+    }
+
+    .prose h2, .prose h3 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .section-block {
+        scroll-margin-top: 100px;
+    }
 </style>
 
 {% endblock %}
@@ -2133,252 +2170,4 @@
         console.log('📚 Page initialization complete');
     });
 </script>
-
-<!-- Learning Module Progress Tracker -->
-<script>
-// Learning Module Progress Tracker
-class ModuleProgressTracker {
-    constructor(moduleId) {
-        this.moduleId = moduleId;
-        this.startTime = Date.now();
-        this.scrollPercentage = 0;
-        this.sectionsVisited = new Set();
-        this.videosWatched = {};
-        this.updateInterval = null;
-        this.init();
-    }
-    
-    init() {
-        this.trackScrollDepth();
-        this.trackVideoProgress();
-        this.trackSectionVisits();
-        this.startPeriodicUpdates();
-    }
-    
-    trackScrollDepth() {
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-        
-        const updateScrollPercentage = () => {
-            const scrollTop = contentArea.scrollTop;
-            const scrollHeight = contentArea.scrollHeight - contentArea.clientHeight;
-            if (scrollHeight > 0) {
-                this.scrollPercentage = Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
-            }
-        };
-        
-        contentArea.addEventListener('scroll', () => {
-            updateScrollPercentage();
-        });
-    }
-    
-    trackVideoProgress() {
-        // Track YouTube iframe videos
-        const videos = document.querySelectorAll('iframe[src*="youtube"]');
-        videos.forEach((video, index) => {
-            const videoId = `video_${index}`;
-            this.videosWatched[videoId] = 0;
-            
-            // Mark as watched when in view
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        this.videosWatched[videoId] = Math.max(
-                            this.videosWatched[videoId], 
-                            50
-                        );
-                    }
-                });
-            }, { threshold: 0.5 });
-            
-            observer.observe(video);
-        });
-    }
-    
-    trackSectionVisits() {
-        // Track which sections user has scrolled through
-        const sections = document.querySelectorAll('[data-section-id]');
-        sections.forEach(section => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const sectionId = entry.target.getAttribute('data-section-id');
-                        this.sectionsVisited.add(sectionId);
-                    }
-                });
-            }, { threshold: 0.3 });
-            
-            observer.observe(section);
-        });
-    }
-    
-    getTimeSpent() {
-        return Math.floor((Date.now() - this.startTime) / 1000);
-    }
-    
-    async saveProgress() {
-        const progressData = {
-            scroll_percentage: this.scrollPercentage,
-            time_spent: this.getTimeSpent(),
-            sections_visited: Array.from(this.sectionsVisited),
-            videos_watched: this.videosWatched
-        };
-        
-        try {
-            const response = await fetch(`/api/learning/progress/${this.moduleId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(progressData)
-            });
-            
-            const result = await response.json();
-            
-            if (result.is_complete) {
-                this.showCompletionNotification();
-                this.stopTracking();
-            }
-            
-            this.updateProgressUI(result);
-        } catch (error) {
-            console.error('Error saving progress:', error);
-        }
-    }
-    
-    startPeriodicUpdates() {
-        // Save progress every 30 seconds
-        this.updateInterval = setInterval(() => {
-            this.saveProgress();
-        }, 30000);
-    }
-    
-    stopTracking() {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-        }
-    }
-    
-    showCompletionNotification() {
-        const notification = document.createElement('div');
-        notification.className = 'completion-notification';
-        notification.innerHTML = `
-            <div class="completion-content">
-                <i class="fas fa-check-circle"></i>
-                <h3>Module Complete!</h3>
-                <p>Great job! You've completed this learning module.</p>
-            </div>
-        `;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
-    }
-    
-    updateProgressUI(result) {
-        const progressPercentage = result.progress_percentage || 0;
-        
-        // Update progress bar if exists
-        const progressBar = document.querySelector(`[data-module="${this.moduleId}"] .progress-fill`);
-        if (progressBar) {
-            progressBar.style.width = `${progressPercentage}%`;
-        }
-        
-        // Update completion badge
-        const navLink = document.querySelector(`[data-content="${this.moduleId}"]`);
-        if (navLink && result.is_complete) {
-            navLink.classList.add('completed');
-        }
-        
-        // Reload overall progress data
-        if (typeof SecureTrainer !== 'undefined' && SecureTrainer.LearningCenter && SecureTrainer.LearningCenter.loadProgressData) {
-            SecureTrainer.LearningCenter.loadProgressData();
-        }
-    }
-}
-
-// Initialize tracker when module loads
-let currentTracker = null;
-
-function initializeModuleTracking(moduleId) {
-    if (currentTracker) {
-        currentTracker.stopTracking();
-    }
-    currentTracker = new ModuleProgressTracker(moduleId);
-}
-
-// Hook into existing loadContent function if it exists
-if (typeof SecureTrainer !== 'undefined' && SecureTrainer.LearningCenter && SecureTrainer.LearningCenter.loadContent) {
-    const originalLoadContent = SecureTrainer.LearningCenter.loadContent;
-    SecureTrainer.LearningCenter.loadContent = function(moduleId) {
-        originalLoadContent.call(this, moduleId);
-        initializeModuleTracking(moduleId);
-    };
-}
-</script>
-
-<style>
-.completion-notification {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
-    animation: slideIn 0.3s ease-out;
-}
-
-.completion-content {
-    text-align: center;
-}
-
-.completion-content i {
-    font-size: 4rem;
-    color: #10b981;
-    margin-bottom: 1rem;
-}
-
-.completion-content h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: #1f2937;
-}
-
-.completion-content p {
-    color: #6b7280;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -60%);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
-    }
-}
-
-.nav-link.completed::after {
-    content: '✓';
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: #10b981;
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-}
-</style>
-
-
 {% endblock %}

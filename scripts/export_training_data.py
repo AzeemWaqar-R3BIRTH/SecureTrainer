@@ -1,5 +1,4 @@
-"""
-Data Export Script for ML Training
+"""Data Export Script for ML Training
 Exports user performance data from MongoDB for model training
 """
 
@@ -8,6 +7,25 @@ import sys
 from datetime import datetime, timedelta
 import pandas as pd
 from pymongo import MongoClient
+
+# Windows console encoding fix - store original print first
+import builtins
+original_print = builtins.print
+
+def safe_print(*args, **kwargs):
+    """Print with fallback for Windows console encoding."""
+    try:
+        original_print(*args, **kwargs)
+    except UnicodeEncodeError:
+        # Replace Unicode symbols with ASCII alternatives
+        message = ' '.join(str(arg) for arg in args)
+        message = message.replace('\u2713', '[OK]').replace('\u2705', '[SUCCESS]')
+        message = message.replace('\u26a0\ufe0f', '[WARNING]').replace('\u274c', '[ERROR]')
+        message = message.replace('\u2717', '[X]')
+        original_print(message, **kwargs)
+
+# Override built-in print
+builtins.print = safe_print
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -179,18 +197,71 @@ def export_training_data():
     
     print(f"✓ Extracted features for {len(training_data)} users")
     
-    # Check if we have any data
-    if len(training_data) == 0:
+    # Minimum required users for robust training
+    MIN_USERS_FOR_REAL_DATA = 100
+    
+    # Check if we should use synthetic data instead
+    if len(training_data) < MIN_USERS_FOR_REAL_DATA:
         print("\n" + "=" * 60)
-        print("⚠️  WARNING: No training data extracted!")
+        print(f"⚠️ Insufficient real data: {len(training_data)} users (need {MIN_USERS_FOR_REAL_DATA})")
         print("=" * 60)
-        print(f"Reason: No users found with at least {min_challenges} completed challenges")
-        print("\nSuggestions:")
-        print(f"  1. Lower min_user_challenges in config/ml_config.py (currently {min_challenges})")
-        print("  2. Have users complete more challenges")
-        print("  3. Use synthetic data for testing")
-        print("=" * 60)
-        return None
+        print("Automatically switching to synthetic data for robust model training...")
+        print()
+        
+        # Generate synthetic data
+        try:
+            # Import the synthetic data generator
+            import sys
+            import os
+            parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            sys.path.insert(0, parent_dir)
+            
+            from generate_demo_training_data import generate_synthetic_users
+            
+            print("Generating 20,000 synthetic users with 15% outliers...")
+            df_synthetic = generate_synthetic_users(num_users=20000, outlier_percentage=0.15)
+            
+            # Save synthetic data
+            print("\n[4/4] Saving synthetic data to CSV...")
+            os.makedirs('data', exist_ok=True)
+            output_file = EXPORT_CONFIG['output_file']
+            df_synthetic.to_csv(output_file, index=False)
+            
+            print(f"✓ Saved to {output_file}")
+            
+            # Print statistics
+            print("\n" + "=" * 60)
+            print("Synthetic Data Statistics")
+            print("=" * 60)
+            print(f"Total samples: {len(df_synthetic):,}")
+            print(f"\nDifficulty distribution:")
+            print(df_synthetic['difficulty_label'].value_counts().sort_index())
+            print(f"\nFeature summary:")
+            print(df_synthetic[FEATURE_NAMES].describe())
+            print("=" * 60)
+            print("\n✅ Using synthetic data for training!")
+            print("This ensures robust model training with diverse outliers.")
+            print("=" * 60)
+            
+            return output_file
+            
+        except Exception as e:
+            print(f"\n❌ Failed to generate synthetic data: {e}")
+            import traceback
+            traceback.print_exc()
+            print("\nFalling back to real data (if available)...")
+            
+            if len(training_data) == 0:
+                print("\n" + "=" * 60)
+                print("❌ No data available for training!")
+                print("=" * 60)
+                print(f"Reason: No users found with at least {min_challenges} completed challenges")
+                print("\nSuggestions:")
+                print(f"  1. Lower min_user_challenges in config/ml_config.py (currently {min_challenges})")
+                print("  2. Have users complete more challenges")
+                print("  3. Fix synthetic data generation")
+                print("=" * 60)
+                return None
     
     # Save to CSV
     print("\n[4/4] Saving to CSV...")

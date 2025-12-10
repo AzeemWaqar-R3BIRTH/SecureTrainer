@@ -320,29 +320,6 @@ def execute_command_safely():
             validation_result['is_valid'], completion_time, hints_used
         )
         
-        # Update user progress if correct (FIX: Added progress persistence)
-        if validation_result['is_valid']:
-            from app.models.challenge_model import update_user_challenge_progress
-            
-            challenge_data = {
-                'category': 'Command Injection',
-                'difficulty': challenge.get('difficulty', 'beginner'),
-                'hints_used': hints_used
-            }
-            
-            # This handles score updates and prevents duplicates
-            update_result = update_user_challenge_progress(
-                user_id, challenge_id, score_earned, challenge_data
-            )
-            
-            if update_result:
-                # If already completed, set score_earned to 0 for response display
-                if update_result.get('already_completed'):
-                    score_earned = 0
-            else:
-                # Fallback if update failed (though DB error likely logged)
-                pass
-        
         return jsonify({
             'success': True,
             'execution_result': execution_result,

@@ -2,10 +2,9 @@
 from flask import Blueprint, request, jsonify, session
 from app.models.user_model import get_user_by_id, update_user_comprehensive
 from app.models.challenge_model import (
-    get_random_challenge, get_challenge_by_id, load_sql_challenges,
+    get_random_challenge, get_challenge_by_id,
     validate_challenge_solution, record_challenge_attempt,
-    calculate_challenge_score, get_all_challenges,
-    update_user_challenge_progress
+    calculate_challenge_score, get_all_challenges
 )
 from app.models.analytics_model import record_user_activity
 from app.routes.ai_model import (
@@ -44,48 +43,21 @@ def start_challenge(user_id):
             if challenges:
                 challenge = challenges[0]
             else:
-                # Fallback to AI recommendation with user filtering
+                # Fallback to AI recommendation
                 difficulty = ai_recommendation_ml(user)
-                challenge = get_random_challenge(difficulty, category, user=user)
+                challenge = get_random_challenge(difficulty, category)
         except Exception as e:
             print(f"Error getting adaptive challenge: {e}")
-            # Ultimate fallback with user filtering
-            challenge = get_random_challenge(None, category, user=user)
+            # Ultimate fallback
+            challenge = get_fallback_challenge('beginner')
 
         if not challenge:
-            # Try to get a challenge without difficulty filter but with user filtering
-            challenge = get_random_challenge(None, category, user=user)
+            # Try to get a challenge without difficulty filter
+            challenge = get_random_challenge(None, category)
             
         if not challenge:
-            # Check if user has completed ALL challenges in this category
-            if category:
-                from app.models.challenge_model import get_challenges_by_category
-                all_category_challenges = get_challenges_by_category(category)
-                completed_challenges = user.get('challenges_completed', [])
-                
-                if all_category_challenges and all(c.get('id') in completed_challenges for c in all_category_challenges):
-                    # User completed all challenges in this category!
-                    return jsonify({
-                        'success': False,
-                        'all_completed': True,
-                        'message': f'🎉 Congratulations! You have completed all {len(all_category_challenges)} challenges in the {category.upper()} category!',
-                        'completed_count': len(all_category_challenges),
-                        'category': category
-                    }), 200
-            
-            # Final fallback - use get_fallback_challenge but check if already completed
-            fallback = get_fallback_challenge('beginner')
-            if fallback and fallback.get('id') in user.get('challenges_completed', []):
-                # Even fallback is completed, return completion message
-                return jsonify({
-                    'success': False,
-                    'all_completed': True,
-                    'message': '🎉 Amazing! You have completed all available challenges!',
-                    'completed_count': len(user.get('challenges_completed', [])),
-                    'category': 'all'
-                }), 200
-            
-            challenge = fallback
+            # Final fallback
+            challenge = get_fallback_challenge('beginner')
 
         # Store challenge start time in session for timing
         session[f'challenge_{challenge["id"]}_start_time'] = time.time()
@@ -120,7 +92,6 @@ def start_challenge(user_id):
                 'scenario': challenge['scenario'],
                 'question': challenge['question'],
                 'payload': challenge.get('payload', ''),
-                'hint': challenge.get('hint', 'Think about the vulnerability type and how it can be exploited.'),
                 'type': challenge.get('type', 'unknown'),
                 'score_weight': challenge.get('score_weight', 100),
                 'interactive_demo': challenge.get('interactive_demo', False),
@@ -149,18 +120,14 @@ def start_challenge(user_id):
                 'difficulty': fallback['difficulty'],
                 'scenario': fallback['scenario'],
                 'question': fallback['question'],
-                'payload': fallback['payload'],
-                'hint': fallback.get('hint', 'Think about the vulnerability type and how it can be exploited.')
+                'payload': fallback['payload']
             }
         }), 200
 
 
 @challenge_bp.route('/submit/<user_id>', methods=['POST'])
 def submit_challenge_solution(user_id):
-    """Submit and validate challenge solution with comprehensive scoring.
-    
-    PREVENTS MULTIPLE SUBMISSIONS FOR ALREADY-COMPLETED CHALLENGES.
-    """
+    """Submit and validate challenge solution with comprehensive scoring."""
     try:
         user = get_user_by_id(user_id)
         if not user:
@@ -173,21 +140,15 @@ def submit_challenge_solution(user_id):
         if not challenge_id or not submitted_answer:
             return jsonify({'error': 'Missing challenge_id or answer'}), 400
 
-        # CRITICAL CHECK: Prevent re-submission of already-completed challenges
+        # CRITICAL: Check if challenge already completed - prevent duplicate submissions
         completed_challenges = user.get('challenges_completed', [])
         if challenge_id in completed_challenges:
-            print(f"Challenge {challenge_id} already completed by user {user_id}. Rejecting submission.")
             return jsonify({
-                'success': True,
-                'correct': False,  # Set to false to prevent showing completion modal
-                'already_submitted': True,
-                'feedback': '⚠️ This challenge has already been completed. Your previous score has been recorded.',
-                'message': 'Challenge already submitted',
-                'score_earned': 0,
-                'completion_time': 0,
-                'attempts_count': 0,
-                'hints_used': 0
-            }), 200
+                'success': False,
+                'error': 'Challenge already completed',
+                'feedback': 'You have already completed this challenge. Please try a different one.',
+                'already_completed': True
+            }), 400
 
         # Get challenge details
         challenge = get_challenge_by_id(challenge_id)
@@ -228,20 +189,16 @@ def submit_challenge_solution(user_id):
                 base_score = challenge.get('score_weight', 100)
                 score_earned = max(base_score // attempts_count, 10)
 
-        # Record the attempt (this ONLY records, doesn't update score)
+        # Record the attempt
         try:
-            attempt_id, calculated_score = record_challenge_attempt(
+            record_challenge_attempt(
                 user_id, challenge_id, submitted_answer, 
                 is_correct, completion_time, hints_used
             )
-            # Use the calculated score if we didn't get one from dynamic scoring
-            if score_earned == 0 and is_correct:
-                score_earned = calculated_score
         except Exception as e:
             print(f"Error recording challenge attempt: {e}")
 
-        # Update user progress if correct - THIS IS THE ONLY PLACE SCORE IS ADDED
-        update_result = None
+        # Update user progress if correct
         if is_correct and score_earned > 0:
             challenge_data = {
                 'category': challenge.get('category', ''),
@@ -250,19 +207,12 @@ def submit_challenge_solution(user_id):
             }
             
             try:
-                # This is the SINGLE call that updates the score
-                update_result = update_user_challenge_progress(
-                    user_id, challenge_id, score_earned, challenge_data
-                )
-                
-                # Also update comprehensive metrics WITHOUT updating score again
-                # (update_score=False prevents duplicate scoring)
-                update_user_comprehensive(user_id, 0, challenge_data, update_score=False)
-                
+                update_user_comprehensive(user_id, score_earned, challenge_data)
             except Exception as e:
-                print(f"Error updating user progress: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"Error updating user comprehensively: {e}")
+                # Fallback to simple update
+                from app.models.user_model import update_user_score_level
+                update_user_score_level(user_id, score_earned)
 
         # Record activity
         record_user_activity(user_id, 'challenge_submission', {
@@ -299,11 +249,6 @@ def submit_challenge_solution(user_id):
                 'new_level': updated_user.get('level', 1),
                 'new_role': updated_user.get('role', 'Trainee')
             })
-        
-        # Add debug info if challenge was already completed
-        if update_result and update_result.get('already_completed'):
-            response_data['already_completed'] = True
-            response_data['message'] = 'Challenge already completed previously'
 
         return jsonify(response_data), 200
         
@@ -663,39 +608,3 @@ def get_fallback_challenge(difficulty="beginner"):
         difficulty = "beginner"
 
     return fallback_challenges[difficulty]
-
-
-@challenge_bp.route('/user/<user_id>', methods=['GET'])
-def get_user_data(user_id):
-    """Get user data for progress bar updates."""
-    try:
-        user = get_user_by_id(user_id)
-        if not user:
-            return jsonify({
-                'success': False,
-                'error': 'User not found'
-            }), 404
-        
-        # Return user data with challenges_completed
-        return jsonify({
-            'success': True,
-            'user': {
-                'id': str(user.get('_id', user_id)),
-                'username': user.get('username', ''),
-                'email': user.get('email', ''),
-                'score': user.get('score', 0),
-                'level': user.get('level', 1),
-                'role': user.get('role', 'Trainee'),
-                'challenges_completed': user.get('challenges_completed', []),
-                'total_challenges': len(user.get('challenges_completed', []))
-            }
-        }), 200
-        
-    except Exception as e:
-        print(f"Error fetching user data: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500

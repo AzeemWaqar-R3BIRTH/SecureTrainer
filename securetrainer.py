@@ -99,7 +99,7 @@ from app.database.db_manager import initialize_database_manager, get_database, g
 from app.utils.error_handler import initialize_error_handling, error_handler, degradation_manager
 from app.utils.session_manager import initialize_session_manager
 
-print("Initializing SecureTrainer components...")
+print("🔧 Initializing SecureTrainer components...")
 
 # Initialize database with robust connection handling
 try:
@@ -107,78 +107,78 @@ try:
     db = get_database()
     
     if db is not None:
-        print(" Database connection established")
+        print("✅ Database connection established")
         # Update Flask config with database client
         app.config['MONGO_CLIENT'] = db_manager.client
     else:
-        print(" Database connection failed - enabling degraded mode")
+        print("⚠️ Database connection failed - enabling degraded mode")
         if 'degradation_manager' in globals():
             degradation_manager.mark_service_down('database', 'Connection failed during startup')
 except Exception as e:
-    print(f" Database initialization error: {e}")
+    print(f"❌ Database initialization error: {e}")
     db = None
 
 # Initialize error handling framework
 try:
     error_handler, degradation_manager = initialize_error_handling(app)
-    print(" Error handling framework initialized")
+    print("✅ Error handling framework initialized")
 except Exception as e:
-    print(f" Error handling initialization failed: {e}")
+    print(f"⚠️ Error handling initialization failed: {e}")
 
 # Initialize session management
 try:
     session_manager = initialize_session_manager(app)
-    print(" Session management initialized")
+    print("✅ Session management initialized")
 except Exception as e:
-    print(f" Session management initialization failed: {e}")
+    print(f"⚠️ Session management initialization failed: {e}")
 
 # Initialize AI system with fallback handling
 try:
     if db is not None:
         init_ai_orchestrator(db)
-        print(" AI system initialized")
+        print("✅ AI system initialized")
     else:
-        print(" AI system initialization skipped - database unavailable")
+        print("⚠️ AI system initialization skipped - database unavailable")
         if degradation_manager:
             degradation_manager.mark_service_down('ai_system', 'Database dependency unavailable')
 except ImportError as e:
-    print(f" AI modules not available: {e}")
+    print(f"⚠️ AI modules not available: {e}")
     if degradation_manager:
         degradation_manager.mark_service_down('ai_system', 'AI modules import failed')
 except Exception as e:
-    print(f" AI system initialization failed: {e}")
+    print(f"⚠️ AI system initialization failed: {e}")
     if degradation_manager:
         degradation_manager.mark_service_down('ai_system', str(e))
 
 # Register AI routes with error handling
 try:
     app.register_blueprint(ai_bp)
-    print(" AI routes registered")
+    print("✅ AI routes registered")
 except Exception as e:
-    print(f" AI routes registration failed: {e}")
+    print(f"⚠️ AI routes registration failed: {e}")
 
 # Register Page routes (must be before other routes)
 try:
     from app.routes.pages import pages_bp
     app.register_blueprint(pages_bp)
-    print(" Page routes registered")
+    print("✅ Page routes registered")
 except Exception as e:
-    print(f" Page routes registration failed: {e}")
+    print(f"⚠️ Page routes registration failed: {e}")
 
 # Register Learning Center routes
 try:
     app.register_blueprint(learning_bp)
-    print(" Learning routes registered")
+    print("✅ Learning routes registered")
 except Exception as e:
-    print(f" Learning routes registration failed: {e}")
+    print(f"⚠️ Learning routes registration failed: {e}")
 
 # Register Challenge routes with error handling
 try:
     from app.routes.challenge import challenge_bp
     app.register_blueprint(challenge_bp, url_prefix='/api/challenges')
-    print(" Challenge routes registered")
+    print("✅ Challenge routes registered")
 except Exception as e:
-    print(f" Challenge routes registration failed: {e}")
+    print(f"⚠️ Challenge routes registration failed: {e}")
 
 # Register other challenge-specific routes with error handling
 try:
@@ -186,45 +186,48 @@ try:
     from app.routes.auth_challenges import auth_challenges_bp
     from app.routes.xss_challenges import xss_bp
     from app.routes.cmd_injection import cmd_injection_bp
-    from app.routes.admin import admin_bp
+    from app.routes.admin import admin_bp, admin_api_bp
     from app.routes.auth import auth_bp
     from app.routes.login import login_bp
+    from app.routes.ml_routes import ml_bp
 
     app.register_blueprint(hints_bp, url_prefix='/api/hints')
     app.register_blueprint(auth_challenges_bp, url_prefix='/api/auth-challenges')
     app.register_blueprint(xss_bp, url_prefix='/api/xss')
     app.register_blueprint(cmd_injection_bp, url_prefix='/api/cmd-injection')
-    app.register_blueprint(admin_bp, url_prefix='/admin')  # Changed from /api/admin to /admin
+    app.register_blueprint(admin_bp)  # admin_bp already has /admin prefix defined in routes/admin.py
+    app.register_blueprint(admin_api_bp)  # API routes at /api/admin
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(login_bp, url_prefix='/api/login')
-    print(" Additional routes registered")
+    app.register_blueprint(ml_bp)  # ML routes already have /api/ml prefix
+    print("✅ Additional routes registered")
 except Exception as e:
-    print(f" Some route registrations failed: {e}")
+    print(f"⚠️ Some route registrations failed: {e}")
 
 # Initialize managers with error handling
 try:
     qr_manager = QRCodeManager()
-    print(" QR manager initialized")
+    print("✅ QR manager initialized")
 except Exception as e:
-    print(f" QR manager initialization failed: {e}")
+    print(f"⚠️ QR manager initialization failed: {e}")
     qr_manager = None
     if degradation_manager:
         degradation_manager.mark_service_down('qr_service', str(e))
 
 try:
     email_manager = EmailManager(mail)
-    print(" Email manager initialized")
+    print("✅ Email manager initialized")
 except Exception as e:
-    print(f" Email manager initialization failed: {e}")
+    print(f"⚠️ Email manager initialization failed: {e}")
     email_manager = None
     if degradation_manager:
         degradation_manager.mark_service_down('email_service', str(e))
 
 try:
     robust_email_manager = RobustEmailManager()
-    print(" Robust email manager initialized")
+    print("✅ Robust email manager initialized")
 except Exception as e:
-    print(f" Robust email manager initialization failed: {e}")
+    print(f"⚠️ Robust email manager initialization failed: {e}")
     robust_email_manager = None
 
 # AI Model fallbacks (simplified versions for demo)
@@ -259,10 +262,10 @@ def set_user_session(user):
     if session_manager:
         success = session_manager.create_user_session(user)
         if success:
-            print(f" Session created: user_id={user.get('_id')}, username={user.get('username')}")
+            print(f"🔐 Session created: user_id={user.get('_id')}, username={user.get('username')}")
             return True
         else:
-            print(f" Failed to create session for user: {user.get('username')}")
+            print(f"❌ Failed to create session for user: {user.get('username')}")
             return False
     else:
         # Fallback to original method if session manager not available
@@ -271,10 +274,10 @@ def set_user_session(user):
             session['username'] = user['username']
             session.permanent = True
             session.modified = True
-            print(f" Fallback session set: user_id={session['user_id']}, username={session['username']}")
+            print(f"🔐 Fallback session set: user_id={session['user_id']}, username={session['username']}")
             return True
         except Exception as e:
-            print(f" Fallback session creation failed: {e}")
+            print(f"❌ Fallback session creation failed: {e}")
             return False
 
 def get_user_from_session():
@@ -284,23 +287,23 @@ def get_user_from_session():
     if session_manager:
         user = session_manager.get_current_user()
         if user:
-            print(f" User found via session manager: {user.get('username')}")
+            print(f"🔍 User found via session manager: {user.get('username')}")
         else:
-            print(f" No user found via session manager")
+            print(f"🔍 No user found via session manager")
         return user
     else:
         # Fallback to original method
-        print(f" Getting user from session (fallback): {dict(session)}")
+        print(f"🔍 Getting user from session (fallback): {dict(session)}")
         if 'user_id' in session:
             try:
                 from app.database.db_manager import find_user_by_id
                 user = find_user_by_id(session['user_id'])
-                print(f" Fallback user lookup: {user.get('username') if user else 'Not found'}")
+                print(f"🔍 Fallback user lookup: {user.get('username') if user else 'Not found'}")
                 return user
             except Exception as e:
-                print(f" Fallback user lookup failed: {e}")
+                print(f"🔍 Fallback user lookup failed: {e}")
                 return None
-        print(f" No user_id in session")
+        print(f"🔍 No user_id in session")
         return None
 
 def require_auth(f):
@@ -313,12 +316,12 @@ def require_auth(f):
     except:
         # Fallback decorator
         def decorated_function(*args, **kwargs):
-            print(f" require_auth checking session: {dict(session)}")
+            print(f"🔍 require_auth checking session: {dict(session)}")
             user = get_user_from_session()
             if not user:
-                print(" require_auth: No user found, redirecting to login")
+                print("❌ require_auth: No user found, redirecting to login")
                 return redirect('/login')
-            print(f" require_auth: User found: {user.get('username', 'Unknown')}")
+            print(f"✅ require_auth: User found: {user.get('username', 'Unknown')}")
             return f(*args, **kwargs)
         
         decorated_function.__name__ = f.__name__
@@ -469,7 +472,7 @@ def register():
                 try:
                     qr_data = qr_manager.generate_qr_code(str(user_id), email)
                 except Exception as e:
-                    print(f" QR generation failed: {e}")
+                    print(f"⚠️ QR generation failed: {e}")
                     if degradation_manager:
                         degradation_manager.mark_service_down('qr_service', str(e))
             
@@ -481,9 +484,9 @@ def register():
                     def send_email_async():
                         try:
                             robust_email_manager.send_welcome_email(email, f"{first_name} {last_name}", qr_data)
-                            print(f" Welcome email sent to {email}")
+                            print(f"✅ Welcome email sent to {email}")
                         except Exception as e:
-                            print(f" Failed to send email: {e}")
+                            print(f"⚠️ Failed to send email: {e}")
                             if degradation_manager:
                                 degradation_manager.mark_service_down('email_service', str(e))
                     
@@ -491,9 +494,9 @@ def register():
                     email_thread = threading.Thread(target=send_email_async)
                     email_thread.daemon = True
                     email_thread.start()
-                    print(f" Email sending started in background for {email}")
+                    print(f"📧 Email sending started in background for {email}")
                 except Exception as e:
-                    print(f" Failed to start email sending: {e}")
+                    print(f"⚠️ Failed to start email sending: {e}")
             
             success_message = 'Registration successful!'
             if qr_data:
@@ -568,17 +571,17 @@ def api_register():
                 def send_email_async():
                     try:
                         robust_email_manager.send_welcome_email(data['email'], f"{data['first_name']} {data['last_name']}", qr_data)
-                        print(f" Welcome email sent to {data['email']}")
+                        print(f"✅ Welcome email sent to {data['email']}")
                     except Exception as e:
-                        print(f" Failed to send email: {e}")
+                        print(f"⚠️ Failed to send email: {e}")
                 
                 # Start email sending in background thread
                 email_thread = threading.Thread(target=send_email_async)
                 email_thread.daemon = True
                 email_thread.start()
-                print(f" Email sending started in background for {data['email']}")
+                print(f"📧 Email sending started in background for {data['email']}")
             except Exception as e:
-                print(f" Failed to start email sending: {e}")
+                print(f"⚠️ Failed to start email sending: {e}")
             
             return jsonify({
                 'success': True,
@@ -651,26 +654,26 @@ def login():
 @app.route('/api/auth/login', methods=['POST'])
 def api_login():
     """API endpoint for user login."""
-    print(f" API login called - Method: {request.method}")
-    print(f" Content-Type: {request.content_type}")
-    print(f" Request files: {list(request.files.keys())}")
-    print(f" Request form: {dict(request.form)}")
+    print(f"🔍 API login called - Method: {request.method}")
+    print(f"🔍 Content-Type: {request.content_type}")
+    print(f"🔍 Request files: {list(request.files.keys())}")
+    print(f"🔍 Request form: {dict(request.form)}")
     
     try:
         # Handle QR code image upload
         if 'qr_image' in request.files:
             file = request.files['qr_image']
             if file.filename:
-                print(f" Processing QR image: {file.filename}")
+                print(f"📁 Processing QR image: {file.filename}")
                 # Reset file pointer to beginning
                 file.seek(0)
                 
                 is_valid, result = qr_manager.validate_qr_code_from_image(file)
-                print(f" QR validation result: valid={is_valid}, result={result}")
+                print(f"🔍 QR validation result: valid={is_valid}, result={result}")
                 
                 if is_valid and db is not None:
                     user_data = result  # result contains user_data when valid
-                    print(f" User data from QR: {user_data}")
+                    print(f"🔍 User data from QR: {user_data}")
                     
                     # Try to find user by ID
                     user = None
@@ -682,17 +685,17 @@ def api_login():
                         if ObjectId.is_valid(user_id_str):
                             user_id = ObjectId(user_id_str)
                             user = db.users.find_one({'_id': user_id})
-                            print(f" User found with ObjectId: {user is not None}")
+                            print(f"🔍 User found with ObjectId: {user is not None}")
                     except Exception as e:
-                        print(f" ObjectId lookup failed: {e}")
+                        print(f"🔍 ObjectId lookup failed: {e}")
                     
                     # If not found, try as string
                     if not user:
                         user = db.users.find_one({'_id': user_id_str})
-                        print(f" User found with string ID: {user is not None}")
+                        print(f"🔍 User found with string ID: {user is not None}")
                     
                     if user:
-                        print(f" Found user: {user['username']}")
+                        print(f"🔍 Found user: {user['username']}")
                         set_user_session(user)
                         
                         # Update last login
@@ -714,11 +717,11 @@ def api_login():
                             }
                         }), 200
                     else:
-                        print(f" User not found for ID: {user_id_str}")
+                        print(f"❌ User not found for ID: {user_id_str}")
                         return jsonify({'success': False, 'message': 'User not found'}), 404
                 else:
                     error_msg = result if isinstance(result, str) else 'Invalid QR code'
-                    print(f" QR validation failed: {error_msg}")
+                    print(f"❌ QR validation failed: {error_msg}")
                     return jsonify({'success': False, 'message': error_msg}), 400
             else:
                 return jsonify({'success': False, 'message': 'No file provided'}), 400
@@ -728,14 +731,14 @@ def api_login():
             data = request.get_json()
             if data and 'qr_data' in data:
                 qr_data = data['qr_data']
-                print(f" Processing camera QR data: {qr_data[:100]}...")
+                print(f"📱 Processing camera QR data: {qr_data[:100]}...")
                 
                 is_valid, result = qr_manager.validate_qr_code(qr_data)
-                print(f" Camera QR validation result: valid={is_valid}, result={result}")
+                print(f"🔍 Camera QR validation result: valid={is_valid}, result={result}")
                 
                 if is_valid and db is not None:
                     user_data = result  # result contains user_data when valid
-                    print(f" User data from camera QR: {user_data}")
+                    print(f"🔍 User data from camera QR: {user_data}")
                     
                     # Try to find user by ID
                     user = None
@@ -748,14 +751,14 @@ def api_login():
                             user_id = ObjectId(user_id_str)
                             user = db.users.find_one({'_id': user_id})
                     except Exception as e:
-                        print(f" ObjectId lookup failed: {e}")
+                        print(f"🔍 ObjectId lookup failed: {e}")
                     
                     # If not found, try as string
                     if not user:
                         user = db.users.find_one({'_id': user_id_str})
                     
                     if user:
-                        print(f" Found user: {user['username']}")
+                        print(f"🔍 Found user: {user['username']}")
                         set_user_session(user)
                         
                         # Update last login
@@ -777,11 +780,11 @@ def api_login():
                             }
                         }), 200
                     else:
-                        print(f" User not found for ID: {user_id_str}")
+                        print(f"❌ User not found for ID: {user_id_str}")
                         return jsonify({'success': False, 'message': 'User not found'}), 404
                 else:
                     error_msg = result if isinstance(result, str) else 'Invalid QR code'
-                    print(f" Camera QR validation failed: {error_msg}")
+                    print(f"❌ Camera QR validation failed: {error_msg}")
                     return jsonify({'success': False, 'message': error_msg}), 400
             else:
                 return jsonify({'success': False, 'message': 'No QR data provided in JSON request'}), 400
@@ -789,7 +792,7 @@ def api_login():
             return jsonify({'success': False, 'message': 'Invalid request format. Expected file upload or JSON data.'}), 400
         
     except Exception as e:
-        print(f" API login error: {e}")
+        print(f"❌ API login error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': 'Login failed. Please try again.'}), 500
@@ -834,15 +837,112 @@ def demo_login():
         flash('Demo login failed.', 'error')
         return redirect('/login')
 
+@app.route('/api/auth/renew-qr', methods=['POST'])
+def renew_qr_code():
+    """Renew QR code for a user by email."""
+    try:
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'Email address is required'
+            }), 400
+        
+        email = data['email'].strip().lower()
+        print(f"🔄 Renewing QR code for email: {email}")
+        
+        if db is None:
+            return jsonify({
+                'success': False,
+                'message': 'Database not available'
+            }), 500
+        
+        # Find user by email
+        user = db.users.find_one({'email': email})
+        if not user:
+            print(f"❌ User not found for email: {email}")
+            return jsonify({
+                'success': False,
+                'message': 'No account found with this email address'
+            }), 404
+        
+        print(f"✅ User found: {user['username']}")
+        
+        # Generate new QR code
+        user_id = str(user['_id'])
+        qr_data = qr_manager.generate_qr_code(user_id, email, expires_in_hours=24)
+        
+        if not qr_data:
+            print("❌ QR code generation failed")
+            return jsonify({
+                'success': False,
+                'message': 'Failed to generate QR code'
+            }), 500
+        
+        print(f"✅ QR code generated: {qr_data['token']}")
+        
+        # Send email with new QR code
+        try:
+            user_full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or user.get('username', 'User')
+            
+            # Check if user is admin
+            is_admin = user.get('is_admin', False) or user.get('role') in ['admin', 'Department Head', 'Security Architect', 'Chief Security Officer']
+            
+            if is_admin:
+                # Send admin-specific email
+                email_sent = email_manager.send_admin_welcome_email(
+                    email,
+                    user_full_name,
+                    qr_data
+                )
+            else:
+                # Send regular user email
+                email_sent = email_manager.send_welcome_email(
+                    email,
+                    user_full_name,
+                    qr_data
+                )
+            
+            if email_sent:
+                print(f"✅ QR renewal email sent to {email}")
+                return jsonify({
+                    'success': True,
+                    'message': 'New QR code has been sent to your email'
+                }), 200
+            else:
+                print("❌ Email sending failed")
+                return jsonify({
+                    'success': False,
+                    'message': 'Failed to send email. Please contact support.'
+                }), 500
+                
+        except Exception as email_error:
+            print(f"❌ Email error: {email_error}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'message': 'Failed to send email. Please contact support.'
+            }), 500
+    
+    except Exception as e:
+        print(f"❌ Renew QR error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred. Please try again later.'
+        }), 500
+
 @app.route('/dashboard')
 @require_auth
 def dashboard():
     """Enhanced user dashboard with server-side analytics."""
-    print(f" Dashboard accessed - session: {dict(session)}")
+    print(f"🏠 Dashboard accessed - session: {dict(session)}")
     user = get_user_from_session()
-    print(f" User from session: {user}")
+    print(f"👤 User from session: {user}")
     if not user:
-        print(" No user found, redirecting to login")
+        print("❌ No user found, redirecting to login")
         return redirect('/login')
     
     # Ensure user has all required fields for template
@@ -872,7 +972,7 @@ def dashboard():
             'improvement_percentage': 0
         }
     
-    print(f" Dashboard analytics: {analytics}")
+    print(f"📊 Dashboard analytics: {analytics}")
     return render_template('dashboard.html', user=user, analytics=analytics)
 
 
@@ -895,23 +995,48 @@ def dashboard_refresh():
             updated_user = db.users.find_one({'_id': str(user['_id'])})
     
     if updated_user:
-        # Get analytics data for charts
-        from app.models.analytics_model import get_dashboard_analytics
-        analytics = get_dashboard_analytics(str(updated_user['_id']))
-        
         return jsonify({
             'success': True,
             'score': updated_user.get('score', 0),
             'level': updated_user.get('level', 1),
-            'role': updated_user.get('role', 'Trainee'),
-            'challenges_completed': len(updated_user.get('challenges_completed', [])),
-            'analytics': analytics
+            'role': updated_user.get('role', 'Trainee')
         })
     
     return jsonify({'success': False}), 500
 
-# Route removed - using pages_bp blueprint implementation instead
-# The pages_bp.challenges_page() includes category_stats calculation
+@app.route('/challenges')
+@require_auth
+def challenges():
+    """Enhanced challenges page with server-side rendering."""
+    user = get_user_from_session()
+    if not user:
+        return redirect('/login')
+    
+    # Get available challenges organized by category
+    from app.models.challenge_model import get_all_challenges
+    all_challenges = get_all_challenges()
+    
+    # Organize challenges by category
+    challenges_by_category = {
+        'sql_injection': [],
+        'xss': [],
+        'command_injection': [],
+        'authentication': [],
+        'csrf': []
+    }
+    
+    for challenge in all_challenges:
+        category = challenge.get('category', 'sql_injection')
+        if category in challenges_by_category:
+            challenges_by_category[category].append(challenge)
+    
+    # Get user progress
+    completed_challenges = user.get('challenges_completed', [])
+    
+    return render_template('challenges.html', 
+                         user=user, 
+                         challenges_by_category=challenges_by_category,
+                         completed_challenges=completed_challenges)
 
 
 @app.route('/challenges/start', methods=['GET', 'POST'])
@@ -1340,6 +1465,16 @@ def health_check():
         'database': 'connected' if db is not None else 'disconnected'
     })
 
+# Analytics performance endpoint (stub to prevent 404)
+@app.route('/api/analytics/performance', methods=['POST', 'GET'])
+def analytics_performance():
+    """Performance analytics endpoint stub."""
+    return jsonify({
+        'success': True,
+        'message': 'Performance data recorded',
+        'timestamp': datetime.now().isoformat()
+    })
+
 if __name__ == '__main__':
     # Clean up expired QR codes
     qr_manager.cleanup_expired_codes()
@@ -1348,10 +1483,10 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') == 'development'
     
-    print(" Starting SecureTrainer...")
-    print(f" Port: {port}")
-    print(f" Debug: {debug}")
-    print(f" Mail: {app.config['MAIL_USERNAME']}")
-    print(f" Database: {'Connected' if db is not None else 'Disconnected'}")
+    print("🚀 Starting SecureTrainer...")
+    print(f"📍 Port: {port}")
+    print(f"🔧 Debug: {debug}")
+    print(f"📧 Mail: {app.config['MAIL_USERNAME']}")
+    print(f"🗄️ Database: {'Connected' if db is not None else 'Disconnected'}")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)# Trigger reload
+    app.run(host='0.0.0.0', port=port, debug=debug)

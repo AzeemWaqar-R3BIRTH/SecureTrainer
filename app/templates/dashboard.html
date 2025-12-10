@@ -12,10 +12,6 @@
             <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user.username }}!</h1>
             <p class="text-blue-100">Ready to enhance your cybersecurity skills?</p>
         </div>
-        <div class="text-right">
-            <p class="text-sm text-blue-200">Member since</p>
-            <p class="text-lg font-semibold">{{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}</p>
-        </div>
     </div>
 </div>
 
@@ -204,38 +200,29 @@
 <div class="bg-white rounded-lg shadow-md p-6 mb-8">
     <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <form action="/challenges/start" method="GET" class="contents">
-            <input type="hidden" name="category" value="sql_injection">
-            <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-800 p-4 rounded-lg border border-red-200 text-left transition-colors">
-                <div class="flex items-center mb-2">
-                    <i class="fas fa-database mr-2"></i>
-                    <h3 class="font-semibold">SQL Injection</h3>
-                </div>
-                <p class="text-sm text-red-600">Test database security vulnerabilities</p>
-            </button>
-        </form>
+        <a href="/challenges" class="bg-red-100 hover:bg-red-200 text-red-800 p-4 rounded-lg border border-red-200 text-left transition-colors block">
+            <div class="flex items-center mb-2">
+                <i class="fas fa-database mr-2"></i>
+                <h3 class="font-semibold">SQL Injection</h3>
+            </div>
+            <p class="text-sm text-red-600">Test database security vulnerabilities</p>
+        </a>
 
-        <form action="/challenges/start" method="GET" class="contents">
-            <input type="hidden" name="category" value="xss">
-            <button type="submit" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 p-4 rounded-lg border border-yellow-200 text-left transition-colors">
-                <div class="flex items-center mb-2">
-                    <i class="fas fa-code mr-2"></i>
-                    <h3 class="font-semibold">XSS Challenges</h3>
-                </div>
-                <p class="text-sm text-yellow-600">Practice cross-site scripting defense</p>
-            </button>
-        </form>
+        <a href="/challenges" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 p-4 rounded-lg border border-yellow-200 text-left transition-colors block">
+            <div class="flex items-center mb-2">
+                <i class="fas fa-code mr-2"></i>
+                <h3 class="font-semibold">XSS Challenges</h3>
+            </div>
+            <p class="text-sm text-yellow-600">Practice cross-site scripting defense</p>
+        </a>
 
-        <form action="/challenges/start" method="GET" class="contents">
-            <input type="hidden" name="category" value="command_injection">
-            <button type="submit" class="bg-purple-100 hover:bg-purple-200 text-purple-800 p-4 rounded-lg border border-purple-200 text-left transition-colors">
-                <div class="flex items-center mb-2">
-                    <i class="fas fa-terminal mr-2"></i>
-                    <h3 class="font-semibold">Command Injection</h3>
-                </div>
-                <p class="text-sm text-purple-600">Learn to prevent command attacks</p>
-            </button>
-        </form>
+        <a href="/challenges" class="bg-purple-100 hover:bg-purple-200 text-purple-800 p-4 rounded-lg border border-purple-200 text-left transition-colors block">
+            <div class="flex items-center mb-2">
+                <i class="fas fa-terminal mr-2"></i>
+                <h3 class="font-semibold">Command Injection</h3>
+            </div>
+            <p class="text-sm text-purple-600">Learn to prevent command attacks</p>
+        </a>
     </div>
     
     <div class="mt-4 text-center">
@@ -281,7 +268,7 @@
             <div class="border-l-4 border-blue-500 pl-4">
                 <h4 class="font-medium text-gray-900">{{ topic.title }}</h4>
                 <p class="text-sm text-gray-600">{{ topic.description }}</p>
-                <a href="/learning-center/{{ topic.slug }}" class="text-blue-600 hover:text-blue-800 text-sm">Learn more →</a>
+                <a href="/learning-center#{{ topic.id }}" class="text-blue-600 hover:text-blue-800 text-sm">Learn more →</a>
             </div>
             {% endfor %}
         </div>
@@ -327,13 +314,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Score',
                     data: {{ analytics.chart_scores | tojson | safe }},
                     borderColor: colors.primary,
-                    backgroundColor: colors.primary + '20',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointBackgroundColor: colors.primary,
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -382,8 +371,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const skillsCtx = document.getElementById('skillsChart');
     if (skillsCtx) {
         const categoryData = {{ analytics.category_performance | tojson | safe }};
-        const categories = Object.keys(categoryData);
-        const successRates = Object.values(categoryData).map(perf => perf.success_rate || 0);
+        let categories = [];
+        let successRates = [];
+        
+        // If we have category performance data, use it
+        if (categoryData && Object.keys(categoryData).length > 0) {
+            categories = Object.keys(categoryData);
+            successRates = Object.values(categoryData).map(perf => perf.success_rate || 0);
+        } else {
+            // Default categories if no data yet
+            categories = ['SQL Injection', 'XSS', 'Command Injection', 'Authentication', 'CSRF'];
+            successRates = [0, 0, 0, 0, 0];
+        }
 
         new Chart(skillsCtx, {
             type: 'radar',
@@ -393,11 +392,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Success Rate (%)',
                     data: successRates,
                     borderColor: colors.secondary,
-                    backgroundColor: colors.secondary + '30',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
                     borderWidth: 2,
                     pointBackgroundColor: colors.secondary,
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -448,10 +449,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Challenges Completed',
                     data: activityData,
-                    backgroundColor: colors.accent + '80',
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
                     borderColor: colors.accent,
                     borderWidth: 1,
-                    borderRadius: 4
+                    borderRadius: 4,
+                    hoverBackgroundColor: colors.accent
                 }]
             },
             options: {
@@ -489,19 +491,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Achievement Progress Chart
     const achievementCtx = document.getElementById('achievementChart');
     if (achievementCtx) {
-        const totalAchievements = 15; // Total possible achievements
-        const earnedAchievements = {{ user.achievements | length if user.achievements else 0 }};
-        const progress = (earnedAchievements / totalAchievements) * 100;
+        const totalAchievements = 50; // Total challenges available
+        const completedChallenges = {{ analytics.challenges_completed | default(0) }};
+        const earnedAchievements = completedChallenges; // Use completed challenges as achievements
+        const progress = totalAchievements > 0 ? (earnedAchievements / totalAchievements) * 100 : 0;
 
         new Chart(achievementCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Earned', 'Remaining'],
+                labels: ['Completed', 'Remaining'],
                 datasets: [{
                     data: [earnedAchievements, totalAchievements - earnedAchievements],
-                    backgroundColor: [colors.purple + '80', '#e5e7eb'],
+                    backgroundColor: ['rgba(139, 92, 246, 0.7)', '#e5e7eb'],
                     borderColor: [colors.purple, '#d1d5db'],
-                    borderWidth: 2
+                    borderWidth: 2,
+                    hoverBackgroundColor: [colors.purple, '#d1d5db']
                 }]
             },
             options: {

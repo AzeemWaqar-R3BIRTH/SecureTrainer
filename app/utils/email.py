@@ -545,6 +545,524 @@ class EmailManager:
             print(f"Error sending welcome email: {str(e)}")
             return False
     
+    def send_admin_welcome_email(self, admin_email, admin_name, qr_code_data):
+        """Send specialized welcome email for admin accounts with QR code attachment."""
+        try:
+            subject = "🔐 SecureTrainer Admin Account Created - Your QR Code is Ready!"
+            
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {{ 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        line-height: 1.6; 
+                        color: #333; 
+                        margin: 0; 
+                        padding: 0; 
+                        background-color: #f5f7fa;
+                    }}
+                    .email-container {{ 
+                        max-width: 650px; 
+                        margin: 0 auto; 
+                        background: white; 
+                        border-radius: 15px; 
+                        overflow: hidden; 
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                    }}
+                    .header {{ 
+                        background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%); 
+                        color: white; 
+                        padding: 40px 30px; 
+                        text-align: center; 
+                        position: relative;
+                    }}
+                    .header::before {{
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+                        opacity: 0.3;
+                    }}
+                    .header-content {{ position: relative; z-index: 1; }}
+                    .logo {{ 
+                        font-size: 56px; 
+                        margin-bottom: 15px; 
+                        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    }}
+                    .header h1 {{ 
+                        margin: 0; 
+                        font-size: 32px; 
+                        font-weight: 700; 
+                        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    }}
+                    .header p {{ 
+                        margin: 10px 0 0 0; 
+                        font-size: 18px; 
+                        opacity: 0.9; 
+                        font-weight: 300;
+                    }}
+                    .admin-badge {{
+                        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+                        display: inline-block;
+                        padding: 8px 20px;
+                        border-radius: 25px;
+                        font-weight: 700;
+                        font-size: 14px;
+                        color: #fff;
+                        margin-top: 15px;
+                        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+                    }}
+                    .content {{ 
+                        padding: 40px 30px; 
+                        background: white;
+                    }}
+                    .greeting {{ 
+                        font-size: 24px; 
+                        font-weight: 600; 
+                        color: #2c3e50; 
+                        margin-bottom: 20px;
+                    }}
+                    .intro-text {{ 
+                        font-size: 16px; 
+                        color: #555; 
+                        margin-bottom: 25px; 
+                        line-height: 1.7;
+                    }}
+                    .admin-privileges {{
+                        background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+                        border: 2px solid #ffc107;
+                        padding: 25px;
+                        margin: 25px 0;
+                        border-radius: 12px;
+                    }}
+                    .admin-privileges h3 {{
+                        color: #2c3e50;
+                        margin-top: 0;
+                        font-size: 20px;
+                        display: flex;
+                        align-items: center;
+                    }}
+                    .admin-privileges h3::before {{
+                        content: '👑';
+                        font-size: 28px;
+                        margin-right: 12px;
+                    }}
+                    .admin-privileges ul {{
+                        margin: 15px 0 0 0;
+                        padding-left: 20px;
+                    }}
+                    .admin-privileges li {{
+                        margin-bottom: 10px;
+                        color: #555;
+                        font-size: 15px;
+                    }}
+                    .qr-section {{ 
+                        background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%); 
+                        padding: 30px; 
+                        margin: 30px 0; 
+                        border-radius: 15px; 
+                        text-align: center; 
+                        border: 2px solid #dc3545; 
+                        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.15);
+                        position: relative;
+                    }}
+                    .qr-section::before {{
+                        content: '🔐';
+                        position: absolute;
+                        top: -15px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: white;
+                        padding: 10px;
+                        border-radius: 50%;
+                        font-size: 24px;
+                        border: 3px solid #dc3545;
+                    }}
+                    .qr-title {{ 
+                        font-size: 22px; 
+                        font-weight: 700; 
+                        color: #2c3e50; 
+                        margin-bottom: 15px;
+                    }}
+                    .qr-description {{ 
+                        font-size: 16px; 
+                        color: #555; 
+                        margin-bottom: 25px;
+                    }}
+                    .attachment-box {{ 
+                        background: white; 
+                        border: 2px dashed #dc3545; 
+                        padding: 25px; 
+                        margin: 20px 0; 
+                        border-radius: 12px; 
+                        transition: all 0.3s ease;
+                    }}
+                    .attachment-box:hover {{
+                        border-color: #c82333;
+                        background: #f8f9ff;
+                    }}
+                    .attachment-icon {{ 
+                        font-size: 48px; 
+                        margin-bottom: 15px; 
+                        color: #dc3545;
+                    }}
+                    .attachment-filename {{ 
+                        font-size: 18px; 
+                        font-weight: 600; 
+                        color: #2c3e50; 
+                        margin-bottom: 10px;
+                    }}
+                    .attachment-description {{ 
+                        font-size: 14px; 
+                        color: #666; 
+                        margin-bottom: 15px;
+                    }}
+                    .security-warning {{ 
+                        background: #fff3cd; 
+                        border: 2px solid #ffc107; 
+                        padding: 15px; 
+                        border-radius: 10px; 
+                        margin: 15px 0;
+                    }}
+                    .security-warning .warning-icon {{ 
+                        color: #ff9800; 
+                        font-size: 20px; 
+                        margin-right: 8px;
+                    }}
+                    .instructions-section {{ 
+                        background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%); 
+                        padding: 30px; 
+                        margin: 30px 0; 
+                        border-radius: 15px; 
+                        border: 2px solid #28a745; 
+                        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+                    }}
+                    .instructions-title {{ 
+                        font-size: 22px; 
+                        font-weight: 700; 
+                        color: #2c3e50; 
+                        margin-bottom: 20px; 
+                        text-align: center;
+                    }}
+                    .step {{ 
+                        background: white; 
+                        padding: 20px; 
+                        margin: 15px 0; 
+                        border-radius: 12px; 
+                        border-left: 4px solid #28a745; 
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                    }}
+                    .step-number {{ 
+                        background: #28a745; 
+                        color: white; 
+                        border-radius: 50%; 
+                        width: 30px; 
+                        height: 30px; 
+                        display: inline-flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        font-weight: bold; 
+                        margin-right: 15px; 
+                        font-size: 16px;
+                    }}
+                    .step-title {{ 
+                        font-size: 18px; 
+                        font-weight: 600; 
+                        color: #2c3e50; 
+                        margin-bottom: 8px;
+                    }}
+                    .step-description {{ 
+                        font-size: 14px; 
+                        color: #555; 
+                        line-height: 1.6;
+                    }}
+                    .highlight {{ 
+                        background: #e3f2fd; 
+                        border: 2px solid #2196f3; 
+                        padding: 20px; 
+                        border-radius: 12px; 
+                        margin: 20px 0;
+                    }}
+                    .highlight h4 {{ 
+                        color: #1976d2; 
+                        margin-bottom: 15px; 
+                        text-align: center; 
+                        font-size: 18px;
+                    }}
+                    .cta-button {{ 
+                        display: inline-block; 
+                        background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%); 
+                        color: white; 
+                        padding: 15px 30px; 
+                        text-decoration: none; 
+                        border-radius: 25px; 
+                        margin: 20px 0; 
+                        font-weight: 600; 
+                        font-size: 16px; 
+                        text-align: center; 
+                        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+                        transition: all 0.3s ease;
+                    }}
+                    .cta-button:hover {{ 
+                        transform: translateY(-2px); 
+                        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+                    }}
+                    .footer {{ 
+                        background: #2c3e50; 
+                        color: #bdc3c7; 
+                        padding: 25px; 
+                        text-align: center; 
+                        font-size: 13px; 
+                        line-height: 1.5;
+                    }}
+                    .footer p {{ 
+                        margin: 5px 0;
+                    }}
+                    @media (max-width: 600px) {{
+                        .email-container {{ margin: 10px; }}
+                        .header, .content {{ padding: 20px; }}
+                        .header h1 {{ font-size: 24px; }}
+                        .qr-section, .instructions-section {{ padding: 20px; }}
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="email-container">
+                    <div class="header">
+                        <div class="header-content">
+                            <div class="logo">🛡️</div>
+                            <h1>Admin Account Created - QR Code Ready!</h1>
+                            <p>Welcome to SecureTrainer Administration<br>Manage and Monitor Your Organization's Security Training</p>
+                            <div class="admin-badge">👑 ADMINISTRATOR ACCESS</div>
+                        </div>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="greeting">Hello Administrator {admin_name},</div>
+                        
+                        <div class="intro-text">
+                            Your <strong>Administrator account</strong> has been successfully created on <strong>SecureTrainer</strong>. As an admin, you have full control over user management, challenge configuration, and organizational security training oversight.
+                        </div>
+                        
+                        <div class="admin-privileges">
+                            <h3>Your Administrator Privileges</h3>
+                            <ul>
+                                <li><strong>User Management:</strong> Create, edit, and manage user accounts across all departments</li>
+                                <li><strong>Challenge Management:</strong> Create, modify, and delete security training challenges</li>
+                                <li><strong>Analytics Dashboard:</strong> Monitor user progress, department performance, and completion rates</li>
+                                <li><strong>System Configuration:</strong> Configure platform settings and security parameters</li>
+                                <li><strong>Reporting:</strong> Generate comprehensive reports on training effectiveness</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="intro-text">
+                            <strong style="color: #dc3545;">Important:</strong> With great power comes great responsibility. Your admin credentials provide elevated access to sensitive organizational data. Please keep your QR code secure and never share it with unauthorized individuals.
+                        </div>
+                        
+                        <div class="qr-section">
+                            <div class="qr-title">Your Secure Admin Login QR Code</div>
+                            <div class="qr-description">This QR code grants administrator access. Keep it secure and confidential.</div>
+                            
+                            <!-- Attachment Information -->
+                            <div class="highlight">
+                                <h4>📎 Admin QR Code Attachment</h4>
+                                <div class="attachment-box">
+                                    <div class="attachment-icon">🔑</div>
+                                    <div class="attachment-filename">SecureTrainer_Admin_QR_{qr_code_data['token'][:8]}.png</div>
+                                    <div class="attachment-description">
+                                        This QR code is your administrator login credential with elevated privileges.
+                                    </div>
+                                    <div class="security-warning">
+                                        <span class="warning-icon">⚠️</span>
+                                        <strong>Critical Security Notice:</strong> This QR code provides FULL ADMINISTRATIVE ACCESS to SecureTrainer.<br>
+                                        • Never share this QR code with anyone<br>
+                                        • Store it securely in a password manager or encrypted storage<br>
+                                        • Report immediately if compromised<br>
+                                        • QR code expires in 24 hours for initial login
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Usage Instructions -->
+                            <div class="instructions-section">
+                                <div class="instructions-title">📱 Admin Login Instructions:</div>
+                                
+                                <div class="step">
+                                    <span class="step-number">1</span>
+                                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                        <div class="step-title">Securely Download the QR Code</div>
+                                        <div class="step-description">
+                                            Download the attached PNG file and store it in a secure location (encrypted folder or password manager). Do NOT save it to unencrypted cloud storage.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="step">
+                                    <span class="step-number">2</span>
+                                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                        <div class="step-title">Navigate to Admin Login</div>
+                                        <div class="step-description">
+                                            Visit the SecureTrainer platform and go to the <strong>Admin Login page</strong> (separate from regular user login).
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="step">
+                                    <span class="step-number">3</span>
+                                    <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
+                                        <div class="step-title">Scan Your Admin QR Code</div>
+                                        <div class="step-description">
+                                            Use the camera scanner or upload the QR code file. After successful login, you'll be redirected to the Admin Dashboard.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <p style="font-size: 16px; color: #555; margin-bottom: 20px;">
+                                Ready to manage your organization's security training program?
+                            </p>
+                            <a href="http://127.0.0.1:5000/admin/login" class="cta-button">Access Admin Dashboard</a>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="footer">
+                        <p><strong>SecureTrainer Administration Team</strong></p>
+                        <p>This is an automated message for administrator account setup. Do not reply to this email.</p>
+                        <p>For admin support, contact the system security team.</p>
+                        <p style="margin-top: 15px; font-size: 11px; opacity: 0.7;">
+                            © 2024 SecureTrainer. All rights reserved. | Administrator Access Only
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            text_body = f"""
+            SecureTrainer Admin Account Created - Your QR Code is Ready!
+            
+            Welcome to SecureTrainer Administration
+            Manage and Monitor Your Organization's Security Training
+            
+            👑 ADMINISTRATOR ACCESS
+            
+            Hello Administrator {admin_name},
+            
+            Your Administrator account has been successfully created on SecureTrainer. As an admin, you have full control over user management, challenge configuration, and organizational security training oversight.
+            
+            ========================================
+            YOUR ADMINISTRATOR PRIVILEGES
+            ========================================
+            
+            • User Management: Create, edit, and manage user accounts across all departments
+            • Challenge Management: Create, modify, and delete security training challenges
+            • Analytics Dashboard: Monitor user progress, department performance, and completion rates
+            • System Configuration: Configure platform settings and security parameters
+            • Reporting: Generate comprehensive reports on training effectiveness
+            
+            Important: With great power comes great responsibility. Your admin credentials provide elevated access to sensitive organizational data. Please keep your QR code secure and never share it with unauthorized individuals.
+            
+            ========================================
+            🔐 YOUR SECURE ADMIN LOGIN QR CODE
+            ========================================
+            
+            This QR code grants administrator access. Keep it secure and confidential.
+            
+            Filename: SecureTrainer_Admin_QR_{qr_code_data['token'][:8]}.png
+            
+            CRITICAL SECURITY NOTICE:
+            This QR code provides FULL ADMINISTRATIVE ACCESS to SecureTrainer.
+            • Never share this QR code with anyone
+            • Store it securely in a password manager or encrypted storage
+            • Report immediately if compromised
+            • QR code expires in 24 hours for initial login
+            
+            ========================================
+            📱 ADMIN LOGIN INSTRUCTIONS
+            ========================================
+            
+            1. Securely Download the QR Code
+               Download the attached PNG file and store it in a secure location (encrypted folder or password manager). Do NOT save it to unencrypted cloud storage.
+            
+            2. Navigate to Admin Login
+               Visit the SecureTrainer platform and go to the Admin Login page (separate from regular user login).
+            
+            3. Scan Your Admin QR Code
+               Use the camera scanner or upload the QR code file. After successful login, you'll be redirected to the Admin Dashboard.
+            
+            ========================================
+            
+            Ready to manage your organization's security training program?
+            Access Admin Dashboard: http://127.0.0.1:5000/admin/login
+            
+            ========================================
+            
+            This is an automated message for administrator account setup. Do not reply to this email.
+            For admin support, contact the system security team.
+            
+            SecureTrainer Administration Team
+            © 2024 SecureTrainer. All rights reserved. | Administrator Access Only
+            """
+            
+            msg = Message(
+                subject=subject,
+                recipients=[admin_email],
+                html=html_body,
+                sender=(self.sender_name, self._get_sender_email())
+            )
+            
+            # Add text version as alternative
+            msg.body = text_body
+            
+            # Set proper MIME type for HTML rendering
+            msg.content_type = "text/html"
+            msg.charset = "utf-8"
+            
+            # Attach QR code as PNG file
+            try:
+                import base64
+                from io import BytesIO
+                
+                # Decode base64 data and create attachment
+                qr_image_data = base64.b64decode(qr_code_data['base64_data'])
+                
+                # Create a descriptive filename for admin
+                filename = f"SecureTrainer_Admin_QR_{qr_code_data['token'][:8]}.png"
+                
+                # Attach as regular attachment for download
+                msg.attach(
+                    filename=filename,
+                    content_type="image/png",
+                    data=qr_image_data,
+                    disposition="attachment"
+                )
+                
+                print(f"[INFO] Admin QR code attached to email for {admin_email} as {filename}")
+            except Exception as e:
+                print(f"[ERROR] Could not attach admin QR code: {e}")
+
+            # Send the email
+            if self.mail:
+                self.mail.send(msg)
+                print(f"[SUCCESS] Admin welcome email sent to {admin_email}")
+            else:
+                print("[WARNING] Mail instance not available, email not sent")
+            return True
+            
+        except Exception as e:
+            print(f"[ERROR] Error sending admin welcome email: {str(e)}")
+            return False
+    
     def send_challenge_completion_email(self, user_email, user_name, challenge_name, score_earned, new_level=None, new_role=None):
         """Send email notification when user completes a challenge."""
         try:
@@ -736,593 +1254,4 @@ class EmailManager:
             
         except Exception as e:
             print(f"Error sending promotion notification: {str(e)}")
-            return False
-    
-    def send_admin_welcome_email(self, user_email, user_name, qr_code_data):
-        """Send welcome email to admin users with QR code attachment and enhanced security messaging."""
-        try:
-            subject = "🛡️ Admin Account Created - SecureTrainer QR Code"
-            
-            html_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body {{ 
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                        line-height: 1.6; 
-                        color: #333; 
-                        margin: 0; 
-                        padding: 0; 
-                        background-color: #f5f7fa;
-                    }}
-                    .email-container {{ 
-                        max-width: 650px; 
-                        margin: 0 auto; 
-                        background: white; 
-                        border-radius: 15px; 
-                        overflow: hidden; 
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                    }}
-                    .header {{ 
-                        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
-                        color: white; 
-                        padding: 40px 30px; 
-                        text-align: center; 
-                        position: relative;
-                    }}
-                    .header-content {{ position: relative; z-index: 1; }}
-                    .logo {{ 
-                        font-size: 48px; 
-                        margin-bottom: 15px; 
-                        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                    }}
-                    .header h1 {{ 
-                        margin: 0; 
-                        font-size: 32px; 
-                        font-weight: 700; 
-                        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                    }}
-                    .header p {{ 
-                        margin: 10px 0 0 0; 
-                        font-size: 18px; 
-                        opacity: 0.9; 
-                        font-weight: 300;
-                    }}
-                    .content {{ 
-                        padding: 40px 30px; 
-                        background: white;
-                    }}
-                    .greeting {{ 
-                        font-size: 24px; 
-                        font-weight: 600; 
-                        color: #2c3e50; 
-                        margin-bottom: 20px;
-                    }}
-                    .intro-text {{ 
-                        font-size: 16px; 
-                        color: #555; 
-                        margin-bottom: 25px; 
-                        line-height: 1.7;
-                    }}
-                    .admin-badge {{
-                        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-                        color: white;
-                        padding: 15px 25px;
-                        border-radius: 10px;
-                        text-align: center;
-                        margin: 20px 0;
-                        font-size: 18px;
-                        font-weight: 700;
-                        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
-                    }}
-                    .qr-section {{ 
-                        background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%); 
-                        padding: 30px; 
-                        margin: 30px 0; 
-                        border-radius: 15px; 
-                        text-align: center; 
-                        border: 2px solid #dc3545; 
-                        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.15);
-                        position: relative;
-                    }}
-                    .qr-section::before {{
-                        content: '🔐';
-                        position: absolute;
-                        top: -15px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background: white;
-                        padding: 10px;
-                        border-radius: 50%;
-                        font-size: 24px;
-                        border: 3px solid #dc3545;
-                    }}
-                    .qr-title {{ 
-                        font-size: 22px; 
-                        font-weight: 700; 
-                        color: #2c3e50; 
-                        margin-bottom: 15px;
-                    }}
-                    .qr-description {{ 
-                        font-size: 16px; 
-                        color: #555; 
-                        margin-bottom: 25px;
-                    }}
-                    .attachment-box {{ 
-                        background: white; 
-                        border: 2px dashed #dc3545; 
-                        padding: 25px; 
-                        margin: 20px 0; 
-                        border-radius: 12px; 
-                        transition: all 0.3s ease;
-                    }}
-                    .attachment-icon {{ 
-                        font-size: 48px; 
-                        margin-bottom: 15px; 
-                        color: #dc3545;
-                    }}
-                    .attachment-filename {{ 
-                        font-size: 18px; 
-                        font-weight: 600; 
-                        color: #2c3e50; 
-                        margin-bottom: 10px;
-                    }}
-                    .security-warning {{ 
-                        background: #fff3cd; 
-                        border: 2px solid #ffc107; 
-                        padding: 20px; 
-                        border-radius: 10px; 
-                        margin: 20px 0;
-                    }}
-                    .security-warning .warning-icon {{ 
-                        color: #ff9800; 
-                        font-size: 24px; 
-                        margin-right: 8px;
-                    }}
-                    .security-warning strong {{
-                        color: #d63031;
-                        font-size: 18px;
-                    }}
-                    .admin-privileges {{
-                        background: linear-gradient(135deg, #e8f5e8 0%, #f0fff4 100%);
-                        padding: 25px;
-                        margin: 25px 0;
-                        border-radius: 12px;
-                        border-left: 4px solid #28a745;
-                    }}
-                    .admin-privileges h3 {{
-                        color: #2c3e50;
-                        margin-bottom: 15px;
-                        font-size: 20px;
-                    }}
-                    .admin-privileges ul {{
-                        margin: 0;
-                        padding-left: 20px;
-                    }}
-                    .admin-privileges li {{
-                        margin-bottom: 8px;
-                        color: #555;
-                        font-size: 15px;
-                    }}
-                    .instructions-section {{ 
-                        background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%); 
-                        padding: 30px; 
-                        margin: 30px 0; 
-                        border-radius: 15px; 
-                        border: 2px solid #28a745; 
-                        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
-                    }}
-                    .instructions-title {{ 
-                        font-size: 22px; 
-                        font-weight: 700; 
-                        color: #2c3e50; 
-                        margin-bottom: 20px; 
-                        text-align: center;
-                    }}
-                    .step {{ 
-                        background: white; 
-                        padding: 20px; 
-                        margin: 15px 0; 
-                        border-radius: 12px; 
-                        border-left: 4px solid #28a745; 
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-                    }}
-                    .step-number {{ 
-                        background: #28a745; 
-                        color: white; 
-                        border-radius: 50%; 
-                        width: 30px; 
-                        height: 30px; 
-                        display: inline-flex; 
-                        align-items: center; 
-                        justify-content: center; 
-                        font-weight: bold; 
-                        margin-right: 15px; 
-                        font-size: 16px;
-                    }}
-                    .step-title {{ 
-                        font-size: 18px; 
-                        font-weight: 600; 
-                        color: #2c3e50; 
-                        margin-bottom: 8px;
-                    }}
-                    .step-description {{ 
-                        font-size: 14px; 
-                        color: #555; 
-                        line-height: 1.6;
-                    }}
-                    .cta-button {{ 
-                        display: inline-block; 
-                        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
-                        color: white; 
-                        padding: 15px 30px; 
-                        text-decoration: none; 
-                        border-radius: 25px; 
-                        margin: 20px 0; 
-                        font-weight: 600; 
-                        font-size: 16px; 
-                        text-align: center; 
-                        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
-                        transition: all 0.3s ease;
-                    }}
-                    .footer {{ 
-                        background: #2c3e50; 
-                        color: #bdc3c7; 
-                        padding: 25px; 
-                        text-align: center; 
-                        font-size: 13px; 
-                        line-height: 1.5;
-                    }}
-                    .footer p {{ margin: 5px 0; }}
-                    @media (max-width: 600px) {{
-                        .email-container {{ margin: 10px; }}
-                        .header, .content {{ padding: 20px; }}
-                        .header h1 {{ font-size: 24px; }}
-                        .qr-section, .instructions-section {{ padding: 20px; }}
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="email-container">
-                    <div class="header">
-                        <div class="header-content">
-                            <div class="logo">🛡️</div>
-                            <h1>Admin Account Created</h1>
-                            <p>SecureTrainer Administrator Access</p>
-                        </div>
-                    </div>
-                    
-                    <div class="content">
-                        <div class="greeting">Hello {user_name},</div>
-                        
-                        <div class="intro-text">
-                            Your <strong>administrator account</strong> has been successfully created on the SecureTrainer platform.
-                        </div>
-                        
-                        <div class="admin-badge">
-                            🔑 ADMINISTRATOR ACCESS GRANTED
-                        </div>
-                        
-                        <div class="security-warning">
-                            <span class="warning-icon">⚠️</span>
-                            <strong>CRITICAL SECURITY NOTICE</strong><br><br>
-                            As an administrator, you have elevated privileges on the SecureTrainer platform. Your QR code provides full administrative access. Keep it secure and never share it with anyone.
-                        </div>
-                        
-                        <div class="qr-section">
-                            <div class="qr-title">Your Secure Admin QR Code</div>
-                            <div class="qr-description">This QR code grants administrator access. Protect it carefully.</div>
-                            
-                            <div class="attachment-box">
-                                <div class="attachment-icon">🔐</div>
-                                <div class="attachment-filename">Admin_QR_Code_{qr_code_data['token'][:8]}.png</div>
-                                <div class="security-warning">
-                                    <span class="warning-icon">⚠️</span>
-                                    <strong>Administrator Credential</strong><br>
-                                    This QR code provides full administrative access to SecureTrainer.<br>
-                                    Store it securely and never share it with unauthorized personnel.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-privileges">
-                            <h3>🎯 Your Administrator Privileges</h3>
-                            <ul>
-                                <li>Full access to admin dashboard and analytics</li>
-                                <li>User management and role assignment</li>
-                                <li>Challenge creation and management</li>
-                                <li>System configuration and monitoring</li>
-                                <li>Department analytics and reporting</li>
-                                <li>ML model management and training</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="instructions-section">
-                            <div class="instructions-title">📱 How to Access Admin Panel:</div>
-                            
-                            <div class="step">
-                                <span class="step-number">1</span>
-                                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
-                                    <div class="step-title">Download Your QR Code</div>
-                                    <div class="step-description">
-                                        Download the attached PNG file and store it in a secure location on your device.
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="step">
-                                <span class="step-number">2</span>
-                                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
-                                    <div class="step-title">Navigate to Admin Login</div>
-                                    <div class="step-description">
-                                        Go to the SecureTrainer admin login page at /admin/login
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="step">
-                                <span class="step-number">3</span>
-                                <div style="display: inline-block; vertical-align: top; width: calc(100% - 50px);">
-                                    <div class="step-title">Login with QR Code</div>
-                                    <div class="step-description">
-                                        Use the QR login option to scan or upload your admin QR code for secure access.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <p style="font-size: 16px; color: #555; margin-bottom: 20px;">
-                                You now have full administrative control over the SecureTrainer platform.
-                            </p>
-                            <a href="http://127.0.0.1:5000/admin/login" class="cta-button">Access Admin Panel</a>
-                        </div>
-                        
-                    </div>
-                    
-                    <div class="footer">
-                        <p><strong>SecureTrainer Administration</strong></p>
-                        <p>This is an automated message for administrator account creation.</p>
-                        <p>If you did not request this account, contact the system administrator immediately.</p>
-                        <p style="margin-top: 15px; font-size: 11px; opacity: 0.7;">
-                            © 2024 SecureTrainer. All rights reserved.
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            
-            text_body = f"""
-            Admin Account Created - SecureTrainer
-            
-            Hello {user_name},
-            
-            Your administrator account has been successfully created on the SecureTrainer platform.
-            
-            🔑 ADMINISTRATOR ACCESS GRANTED
-            
-            ========================================
-            CRITICAL SECURITY NOTICE
-            ========================================
-            
-            As an administrator, you have elevated privileges on the SecureTrainer platform. Your QR code provides full administrative access. Keep it secure and never share it with anyone.
-            
-            ========================================
-            🔐 YOUR SECURE ADMIN QR CODE
-            ========================================
-            
-            Filename: Admin_QR_Code_{qr_code_data['token'][:8]}.png
-            
-            This QR code provides full administrative access to SecureTrainer.
-            Store it securely and never share it with unauthorized personnel.
-            
-            ========================================
-            🎯 YOUR ADMINISTRATOR PRIVILEGES
-            ========================================
-            
-            - Full access to admin dashboard and analytics
-            - User management and role assignment
-            - Challenge creation and management
-            - System configuration and monitoring
-            - Department analytics and reporting
-            - ML model management and training
-            
-            ========================================
-            📱 HOW TO ACCESS ADMIN PANEL
-            ========================================
-            
-            1. Download Your QR Code - Download the attached PNG file and store it in a secure location on your device.
-            
-            2. Navigate to Admin Login - Go to the SecureTrainer admin login page at /admin/login
-            
-            3. Login with QR Code - Use the QR login option to scan or upload your admin QR code for secure access.
-            
-            You now have full administrative control over the SecureTrainer platform.
-            
-            ========================================
-            
-            This is an automated message for administrator account creation.
-            If you did not request this account, contact the system administrator immediately.
-            
-            SecureTrainer Administration Team
-            """
-            
-            msg = Message(
-                subject=subject,
-                recipients=[user_email],
-                html=html_body,
-                sender=(self.sender_name, self._get_sender_email())
-            )
-            
-            # Add text version as alternative
-            msg.body = text_body
-            
-            # Set proper MIME type for HTML rendering
-            msg.content_type = "text/html"
-            msg.charset = "utf-8"
-            
-            # Attach QR code as PNG file
-            try:
-                import base64
-                from io import BytesIO
-                
-                # Decode base64 data and create attachment
-                qr_image_data = base64.b64decode(qr_code_data['base64_data'])
-                
-                # Create a descriptive filename
-                filename = f"Admin_QR_Code_{qr_code_data['token'][:8]}.png"
-                
-                # Attach as regular attachment for download
-                msg.attach(
-                    filename=filename,
-                    content_type="image/png",
-                    data=qr_image_data,
-                    disposition="attachment"
-                )
-                
-                print(f"✅ Admin QR code attached to email for {user_email} as {filename}")
-            except Exception as e:
-                print(f"⚠️ Could not attach admin QR code: {e}")
-
-            # Send the email
-            if self.mail:
-                self.mail.send(msg)
-                print(f"✅ Admin welcome email sent to {user_email}")
-            else:
-                print("⚠️ Mail instance not available, email not sent")
-            return True
-            
-        except Exception as e:
-            print(f"Error sending admin welcome email: {str(e)}")
-            return False
-    
-    def send_qr_renewal_email(self, user_email, user_name, qr_code_data):
-        """Send QR code renewal email to user."""
-        try:
-            subject = "Your New SecureTrainer QR Code"
-            
-            html_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
-                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
-                    .qr-box {{ background: white; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center; border: 2px solid #667eea; }}
-                    .warning-box {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
-                    .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 12px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🔄 New QR Code Requested</h1>
-                    </div>
-                    
-                    <div class="content">
-                        <p>Hello {user_name},</p>
-                        
-                        <p>You requested a new QR code for your SecureTrainer account. Your previous QR code has been replaced with this new one.</p>
-                        
-                        <div class="qr-box">
-                            <img src="data:image/png;base64,{qr_code_data['base64_data']}" 
-                                 alt="Login QR Code" 
-                                 style="max-width: 300px; border-radius: 10px;"/>
-                        </div>
-                        
-                        <div class="warning-box">
-                            <p style="margin: 0;"><strong>⚠️ Important:</strong></p>
-                            <ul style="margin: 10px 0;">
-                                <li>This QR code is valid for <strong>5 days</strong></li>
-                                <li>Keep this QR code secure and don't share it</li>
-                                <li>You can request a new QR code anytime if this one expires</li>
-                            </ul>
-                        </div>
-                        
-                        <p><strong>To log in:</strong></p>
-                        <ol>
-                            <li>Go to the SecureTrainer login page</li>
-                            <li>Click "Scan QR Code" or "Upload QR Code"</li>
-                            <li>Scan or upload this QR code</li>
-                        </ol>
-                        
-                        <div class="footer">
-                            <p>If you didn't request this QR code, please contact support immediately.</p>
-                            <p style="margin-top: 15px;">© 2024 SecureTrainer. All rights reserved.</p>
-                        </div>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            
-            text_body = f"""
-            New QR Code Requested - SecureTrainer
-            
-            Hello {user_name},
-            
-            You requested a new QR code for your SecureTrainer account. Your previous QR code has been replaced with this new one.
-            
-            ⚠️ IMPORTANT:
-            - This QR code is valid for 5 days
-            - Keep this QR code secure and don't share it
-            - You can request a new QR code anytime if this one expires
-            
-            TO LOG IN:
-            1. Go to the SecureTrainer login page
-            2. Click "Scan QR Code" or "Upload QR Code"
-            3. Scan or upload this QR code
-            
-            If you didn't request this QR code, please contact support immediately.
-            
-            Best regards,
-            The SecureTrainer Team
-            """
-            
-            msg = Message(
-                subject=subject,
-                recipients=[user_email],
-                html=html_body,
-                sender=(self.sender_name, self._get_sender_email())
-            )
-            
-            # Add text version
-            msg.body = text_body
-            msg.content_type = "text/html"
-            msg.charset = "utf-8"
-            
-            # Attach QR code
-            try:
-                import base64
-                qr_image_data = base64.b64decode(qr_code_data['base64_data'])
-                filename = f"SecureTrainer_QR_Renewed_{qr_code_data['token'][:8]}.png"
-                
-                msg.attach(
-                    filename=filename,
-                    content_type="image/png",
-                    data=qr_image_data,
-                    disposition="attachment"
-                )
-                
-                print(f"✅ Renewed QR code attached to email for {user_email}")
-            except Exception as e:
-                print(f"⚠️ Could not attach renewed QR code: {e}")
-            
-            # Send email
-            if self.mail:
-                self.mail.send(msg)
-                print(f"✅ QR renewal email sent to {user_email}")
-            else:
-                print("⚠️ Mail instance not available, email not sent")
-            return True
-            
-        except Exception as e:
-            print(f"Error sending QR renewal email: {str(e)}")
             return False

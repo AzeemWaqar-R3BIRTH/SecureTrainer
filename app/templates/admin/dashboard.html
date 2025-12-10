@@ -19,6 +19,10 @@
                 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center transition">
                 <i class="fas fa-trophy mr-2"></i> Manage Challenges
             </a>
+            <a href="{{ url_for('admin.ml_management') }}"
+                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center transition">
+                <i class="fas fa-robot mr-2"></i> AI Model
+            </a>
         </div>
     </div>
 
@@ -130,19 +134,19 @@
                                 <div class="flex items-center">
                                     <div
                                         class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3">
-                                        {{ user.name[0] if user.name else 'U' }}
+                                        {{ user.name[0] }}
                                     </div>
                                     <div>
                                         <div class="font-medium text-gray-900">{{ user.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ user.get('role', 'Trainee') }}</div>
+                                        <div class="text-xs text-gray-500">{{ user.role }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="p-4 text-sm text-gray-600">{{ user.get('department', 'N/A') }}</td>
-                            <td class="p-4 font-bold text-gray-800">{{ user.get('score', 0) }}</td>
+                            <td class="p-4 text-sm text-gray-600">{{ user.department }}</td>
+                            <td class="p-4 font-bold text-gray-800">{{ user.score }}</td>
                             <td class="p-4">
                                 <span class="bg-blue-100 text-blue-800 py-1 px-2 rounded text-xs font-medium">Lvl {{
-                                    user.get('level', 1) }}</span>
+                                    user.level }}</span>
                             </td>
                         </tr>
                         {% endfor %}

@@ -1,6 +1,6 @@
 {
-  "accuracy": 0.0,
-  "training_date": "2025-12-08T14:35:18.782210",
+  "accuracy": 0.98875,
+  "training_date": "2025-12-09T18:11:18.410816",
   "model_config": {
     "n_estimators": 100,
     "max_depth": 10,
@@ -9,63 +9,92 @@
     "random_state": 42,
     "n_jobs": -1
   },
-  "training_samples": 2,
+  "training_samples": 8000,
   "classes": [
     "advanced",
     "beginner",
-    "expert"
+    "expert",
+    "intermediate"
   ],
   "classification_report": {
     "advanced": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 0.0
+      "precision": 0.9775700934579439,
+      "recall": 0.9803186504217432,
+      "f1-score": 0.9789424426766495,
+      "support": 1067.0
     },
     "beginner": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 1.0
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 936.0
     },
-    "accuracy": 0.0,
+    "expert": {
+      "precision": 0.9980449657869013,
+      "recall": 1.0,
+      "f1-score": 0.9990215264187867,
+      "support": 1021.0
+    },
+    "intermediate": {
+      "precision": 0.98043254376931,
+      "recall": 0.9754098360655737,
+      "f1-score": 0.977914740626605,
+      "support": 976.0
+    },
+    "accuracy": 0.98875,
     "macro avg": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 1.0
+      "precision": 0.9890119007535387,
+      "recall": 0.9889321216218292,
+      "f1-score": 0.9889696774305103,
+      "support": 4000.0
     },
     "weighted avg": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 1.0
+      "precision": 0.9887433406267249,
+      "recall": 0.98875,
+      "f1-score": 0.9887443379152833,
+      "support": 4000.0
     }
   },
   "confusion_matrix": [
     [
+      1046,
+      0,
+      2,
+      19
+    ],
+    [
+      0,
+      936,
       0,
       0
     ],
     [
-      1,
+      0,
+      0,
+      1021,
       0
+    ],
+    [
+      24,
+      0,
+      0,
+      952
     ]
   ],
   "feature_importance": {
-    "level": 0.0,
-    "score": 0.0,
-    "hint_count": 0.0,
-    "challenges_completed": 0.0,
-    "success_rate": 0.0,
-    "avg_completion_time": 0.0,
-    "consecutive_successes": 0.0,
-    "consecutive_failures": 0.0,
-    "days_since_registration": 0.0,
-    "sql_injection_score": 0.0,
-    "xss_score": 0.0,
-    "command_injection_score": 0.0,
-    "authentication_score": 0.0,
-    "csrf_score": 0.0
+    "level": 0.2237548383791105,
+    "score": 0.16947232060948642,
+    "authentication_score": 0.124164216650088,
+    "command_injection_score": 0.11863786016974717,
+    "sql_injection_score": 0.08902906870594819,
+    "challenges_completed": 0.07796551591273332,
+    "csrf_score": 0.05294343436231189,
+    "xss_score": 0.042012743102513,
+    "avg_completion_time": 0.03714510901809114,
+    "consecutive_successes": 0.03139180942532676,
+    "hint_count": 0.019091726640409448,
+    "consecutive_failures": 0.00571034884733722,
+    "success_rate": 0.004495319369196919,
+    "days_since_registration": 0.004185688807699985
   }
 }

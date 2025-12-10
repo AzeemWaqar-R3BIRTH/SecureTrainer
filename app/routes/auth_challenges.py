@@ -88,23 +88,6 @@ def simulate_vulnerable_login():
                     user_id, challenge_id, f"username: {username}, password: {password}",
                     True, completion_time, hints_used
                 )
-
-                # Update user progress (FIX: Added progress persistence)
-                from app.models.challenge_model import update_user_challenge_progress
-                
-                challenge_data = {
-                    'category': 'Authentication Attacks',
-                    'difficulty': challenge.get('difficulty', 'beginner'),
-                    'hints_used': hints_used
-                }
-                
-                # This handles score updates and prevents duplicates
-                update_result = update_user_challenge_progress(
-                    user_id, challenge_id, score_earned, challenge_data
-                )
-                
-                if update_result and update_result.get('already_completed'):
-                    score_earned = 0
         
         return jsonify({
             'success': True,

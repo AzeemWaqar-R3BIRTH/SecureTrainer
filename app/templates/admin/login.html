@@ -54,13 +54,64 @@
                 <i class="fas fa-qrcode mr-1"></i> Go to QR Login
             </a>
         </div>
-
-        <div class="mt-4 text-center border-t pt-4">
-            <p class="text-sm text-gray-600 mb-2">Need to create an admin account?</p>
-            <a href="{{ url_for('admin.admin_register') }}" class="text-red-600 hover:text-red-800 font-medium text-sm">
-                <i class="fas fa-user-plus mr-1"></i> Admin Registration
-            </a>
+        
+        <div class="mt-4 text-center">
+            <button id="renew-admin-qr-btn" class="text-orange-600 hover:text-orange-800 font-medium text-sm">
+                <i class="fas fa-sync-alt mr-1"></i> Renew QR Code
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+// Renew QR Code handler for admin login
+document.addEventListener('DOMContentLoaded', function() {
+    const renewBtn = document.getElementById('renew-admin-qr-btn');
+    if (renewBtn) {
+        renewBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const email = prompt('Enter your registered admin email address:');
+            if (!email || !email.trim()) {
+                alert('Email address is required');
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            renewBtn.disabled = true;
+            renewBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Generating...';
+            
+            try {
+                const response = await fetch('/api/auth/renew-qr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email.trim() })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    alert('✅ New QR code sent to your email!');
+                } else {
+                    alert(data.message || 'Failed to renew QR code');
+                }
+            } catch (error) {
+                console.error('Renew QR error:', error);
+                alert('Network error. Please try again.');
+            } finally {
+                renewBtn.disabled = false;
+                renewBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Renew QR Code';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

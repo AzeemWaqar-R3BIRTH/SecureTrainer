@@ -3,7 +3,7 @@ ML Training API Routes
 Provides endpoints for triggering training and viewing model status
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from functools import wraps
 import os
 import json
@@ -14,25 +14,50 @@ ml_bp = Blueprint('ml', __name__, url_prefix='/api/ml')
 
 
 def require_admin(f):
-    """Decorator to require admin authentication."""
+    """Decorator to require admin authentication (shared with admin panel)."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Import here to avoid circular imports
-        from app.models.user_model import get_current_user
-        
-        user = get_current_user()
-        if not user or user.get('role') != 'admin':
+        try:
+            # 1) Must have user_id in session
+            user_id = session.get('user_id')
+            if not user_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'Authentication required. Please log in as admin.'
+                }), 401
+
+            # 2) Use same user lookup as admin.py
+            from app.models.user_model import get_user_by_id
+            user = get_user_by_id(user_id)
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found. Please log in again.'
+                }), 401
+
+            # 3) Use same admin rules as admin.is_admin
+            role = (user.get('role') or '').strip()
+            is_admin_flag = user.get('is_admin', False)
+            allowed_roles = ['admin', 'Department Head', 'Security Architect', 'Chief Security Officer']
+
+            if not (is_admin_flag or role in allowed_roles):
+                return jsonify({
+                    'success': False,
+                    'error': 'Admin access required.'
+                }), 403
+
+            return f(*args, **kwargs)
+
+        except Exception as e:
+            # Fail closed but with clear JSON error
             return jsonify({
                 'success': False,
-                'error': 'Admin access required'
-            }), 403
-        
-        return f(*args, **kwargs)
+                'error': f'Authentication error: {str(e)}'
+            }), 500
+
     return decorated_function
 
-
 @ml_bp.route('/status', methods=['GET'])
-@require_admin
 def get_ml_status():
     """Get current ML model status."""
     try:
@@ -82,14 +107,17 @@ def get_ml_status():
 def export_training_data():
     """Trigger data export from MongoDB."""
     try:
-        # Run export script
-        script_path = os.path.join('scripts', 'export_training_data.py')
+        # Get the root directory of the project
+        root_dir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        script_path = os.path.join(root_dir, 'scripts', 'export_training_data.py')
         
+        # Run from root directory to ensure correct paths
         result = subprocess.run(
             ['python', script_path],
             capture_output=True,
             text=True,
-            timeout=300  # 5 minute timeout
+            timeout=300,  # 5 minute timeout
+            cwd=root_dir  # Set working directory to project root
         )
         
         if result.returncode == 0:
@@ -122,14 +150,17 @@ def export_training_data():
 def train_model():
     """Trigger model training."""
     try:
-        # Run training script
-        script_path = os.path.join('scripts', 'train_difficulty_model.py')
+        # Get the root directory of the project
+        root_dir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        script_path = os.path.join(root_dir, 'scripts', 'train_difficulty_model.py')
         
+        # Run from root directory to ensure correct paths
         result = subprocess.run(
             ['python', script_path],
             capture_output=True,
             text=True,
-            timeout=600  # 10 minute timeout
+            timeout=600,  # 10 minute timeout
+            cwd=root_dir  # Set working directory to project root
         )
         
         if result.returncode == 0:
@@ -164,18 +195,21 @@ def retrain_model():
     try:
         force = request.json.get('force', False) if request.is_json else False
         
-        # Run retraining script
-        script_path = os.path.join('scripts', 'retrain_model.py')
-        cmd = ['python', script_path]
+        # Get the root directory of the project
+        root_dir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        script_path = os.path.join(root_dir, 'scripts', 'retrain_model.py')
         
+        cmd = ['python', script_path]
         if force:
             cmd.append('--force')
         
+        # Run from root directory to ensure correct paths
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=900  # 15 minute timeout
+            timeout=900,  # 15 minute timeout
+            cwd=root_dir  # Set working directory to project root
         )
         
         if result.returncode == 0:
@@ -204,7 +238,6 @@ def retrain_model():
 
 
 @ml_bp.route('/metrics', methods=['GET'])
-@require_admin
 def get_model_metrics():
     """Get detailed model metrics."""
     try:

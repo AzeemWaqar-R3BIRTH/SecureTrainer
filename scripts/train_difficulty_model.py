@@ -1,5 +1,4 @@
-"""
-Model Training Script for SecureTrainer
+"""Model Training Script for SecureTrainer
 Trains RandomForest classifier for difficulty prediction
 """
 
@@ -14,6 +13,25 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import joblib
+
+# Windows console encoding fix - store original print first
+import builtins
+original_print = builtins.print
+
+def safe_print(*args, **kwargs):
+    """Print with fallback for Windows console encoding."""
+    try:
+        original_print(*args, **kwargs)
+    except UnicodeEncodeError:
+        # Replace Unicode symbols with ASCII alternatives
+        message = ' '.join(str(arg) for arg in args)
+        message = message.replace('\u2713', '[OK]').replace('\u2705', '[SUCCESS]')
+        message = message.replace('\u26a0\ufe0f', '[WARNING]').replace('\u274c', '[ERROR]')
+        message = message.replace('\u2717', '[X]')
+        original_print(message, **kwargs)
+
+# Override built-in print
+builtins.print = safe_print
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

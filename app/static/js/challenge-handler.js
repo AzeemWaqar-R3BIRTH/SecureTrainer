@@ -192,38 +192,6 @@ window.SecureTrainerChallenges = {
             if (data.success && data.challenge) {
                 this.loadChallenge(data.challenge);
                 this.showMessage('Challenge loaded successfully!', 'success');
-            } else if (data.all_completed) {
-                // User has completed all challenges in this category
-                this.showMessage(data.message || '🎉 All challenges completed!', 'success');
-                
-                // Show completion message in the challenge area
-                const challengeArea = document.getElementById('challenge-area');
-                if (challengeArea) {
-                    challengeArea.innerHTML = `
-                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-lg p-8 text-center">
-                            <div class="text-6xl mb-4">🎉</div>
-                            <h2 class="text-3xl font-bold text-gray-800 mb-4">Congratulations!</h2>
-                            <p class="text-xl text-gray-700 mb-6">${data.message}</p>
-                            <div class="bg-white rounded-lg p-6 mb-6 inline-block">
-                                <p class="text-lg text-gray-600 mb-2">Challenges Completed</p>
-                                <p class="text-5xl font-bold text-green-600">${data.completed_count || 0}</p>
-                            </div>
-                            <div class="flex gap-4 justify-center">
-                                <a href="/challenges" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200">
-                                    Try Another Category
-                                </a>
-                                <a href="/dashboard" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-200">
-                                    View Dashboard
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                // Reset loading state
-                this.isLoading = false;
-                this.setButtonLoadingState(buttonElement, false);
-                return;
             } else {
                 throw new Error(data.error || 'Failed to load challenge data');
             }
@@ -294,7 +262,7 @@ window.SecureTrainerChallenges = {
         const elements = {
             'challenge-title': (challengeData.category || 'Unknown') + ' Challenge',
             'challenge-difficulty': challengeData.difficulty || 'Intermediate',
-            'challenge-points': this.calculatePointsRange(challengeData),
+            'challenge-points': (challengeData.score_weight || 10) * 10,
             'challenge-scenario': challengeData.scenario || 'Challenge scenario',
             'challenge-question': challengeData.question || 'Challenge question'
         };
@@ -312,28 +280,6 @@ window.SecureTrainerChallenges = {
             const difficulty = (challengeData.difficulty || 'intermediate').toLowerCase();
             difficultyEl.className = `ml-1 px-2 py-1 rounded bg-blue-100 text-blue-800 difficulty-${difficulty}`;
         }
-    },
-
-    // Calculate points range based on multipliers
-    calculatePointsRange(challengeData) {
-        const baseScore = (challengeData.score_weight || 10);
-        const difficultyMultipliers = {
-            'beginner': 1.0,
-            'intermediate': 1.5,
-            'advanced': 2.2,
-            'expert': 3.0
-        };
-        
-        const difficulty = (challengeData.difficulty || 'intermediate').toLowerCase();
-        const diffMultiplier = difficultyMultipliers[difficulty] || 1.5;
-        
-        // Minimum score (with penalties): base × difficulty × 0.3 (max penalties)
-        const minScore = Math.round(baseScore * diffMultiplier * 0.3);
-        
-        // Maximum score (all bonuses): base × difficulty × 3.0 (level + speed + streak + mastery)
-        const maxScore = Math.round(baseScore * diffMultiplier * 3.5);
-        
-        return `${minScore}-${maxScore}`;
     },
 
     // Create the challenge interface
@@ -387,7 +333,8 @@ window.SecureTrainerChallenges = {
                         id="user-answer" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                         rows="4" 
-                        placeholder="Explain what this payload does and how the attack works..."></textarea>
+                        placeholder="Explain what this payload does and how the attack works..."
+                    ></textarea>
                 </div>
                 
                 <div class="flex space-x-4 mb-4">
@@ -399,11 +346,9 @@ window.SecureTrainerChallenges = {
                     </button>
                 </div>
                 
-                <div id="hint-display" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md" style="display: none; max-width: 100%; width: 100%;">
-                    <h4 class="font-medium text-yellow-800 mb-2">
-                        <i class="fas fa-lightbulb mr-2"></i>💡 Hint:
-                    </h4>
-                    <p class="text-yellow-700 whitespace-pre-wrap break-words" id="hint-text" style="word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; max-width: 100%; text-overflow: clip;"></p>
+                <div id="hint-display" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md" style="display: none;">
+                    <h4 class="font-medium text-yellow-800 mb-2">💡 Hint:</h4>
+                    <p class="text-yellow-700" id="hint-text"></p>
                 </div>
             </div>
         `;
@@ -470,32 +415,46 @@ window.SecureTrainerChallenges = {
             const data = await response.json();
 
             if (data.success) {
-                // Check if challenge was already submitted
-                if (data.already_submitted) {
-                    this.showMessage(data.feedback || '⚠️ Challenge already completed!', 'warning');
-                    // Disable submit button to prevent further attempts
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Already Submitted';
-                    }
-                    return;
-                }
-                
                 if (data.correct) {
                     this.showMessage(`🎉 Correct! You earned ${data.score_earned || 0} points!`, 'success');
                     this.challengeCompleted = true;
                     
-                    // Store completion flag in sessionStorage for dashboard refresh
-                    sessionStorage.setItem('challengeJustCompleted', 'true');
-                    sessionStorage.setItem('lastCompletedScore', data.score_earned || 0);
-                    sessionStorage.setItem('lastCompletedChallenge', this.currentChallenge.id);
+                    // KEEP BUTTON DISABLED - challenge completed
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Challenge Completed!';
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
                     
-                    // Show completion summary
-                    this.showCompletionSummary(data);
+                    // Disable answer input
+                    if (answerEl) {
+                        answerEl.disabled = true;
+                    }
+                    
+                    return; // Don't re-enable button
                 } else {
                     this.showMessage(data.feedback || '❌ Incorrect answer. Try again!', 'warning');
                 }
             } else {
+                // Check if already completed
+                if (data.already_completed) {
+                    this.showMessage(data.feedback || 'Challenge already completed!', 'info');
+                    this.challengeCompleted = true;
+                    
+                    // Keep button disabled
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Already Completed';
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    if (answerEl) {
+                        answerEl.disabled = true;
+                    }
+                    
+                    return; // Don't re-enable button
+                }
+                
                 this.showMessage(data.error || 'Failed to submit answer', 'error');
             }
 
@@ -503,7 +462,8 @@ window.SecureTrainerChallenges = {
             this.showMessage('Error submitting answer. Please try again.', 'error');
 
         } finally {
-            if (submitBtn) {
+            // Only re-enable if challenge NOT completed
+            if (submitBtn && !this.challengeCompleted) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Submit Answer';
             }
@@ -550,31 +510,6 @@ window.SecureTrainerChallenges = {
 
                 if (data.success) {
                     hintText.textContent = data.hint;
-                    // Force full display with !important equivalent (cssText override)
-                    hintText.style.cssText = `
-                        color: rgb(161, 98, 7);
-                        overflow: visible !important;
-                        text-overflow: clip !important;
-                        white-space: pre-wrap !important;
-                        word-wrap: break-word !important;
-                        word-break: break-word !important;
-                        overflow-wrap: break-word !important;
-                        display: block !important;
-                        max-height: none !important;
-                        height: auto !important;
-                        max-width: 100% !important;
-                        -webkit-line-clamp: unset !important;
-                        line-clamp: unset !important;
-                    `;
-                    // Also ensure parent container doesn't constrain
-                    const hintDisplayClasses = hintDisplay.className;
-                    hintDisplay.style.cssText = `
-                        display: block !important;
-                        max-width: 100% !important;
-                        width: 100% !important;
-                        overflow: visible !important;
-                    `;
-                    hintDisplay.className = hintDisplayClasses; // Preserve classes
                     this.hintCount = data.hint_number;
                     hintDisplay.style.display = 'block';
 
@@ -627,75 +562,12 @@ window.SecureTrainerChallenges = {
         };
     },
 
-    // Show completion summary after successful challenge
-    showCompletionSummary(data) {
-        const summaryHTML = `
-            <div class="fixed top-20 right-4 left-4 md:left-auto md:w-96 bg-white rounded-lg shadow-2xl p-6 z-50 border-l-4 border-green-500" id="completion-summary">
-                <div class="text-center">
-                    <div class="text-5xl mb-4">🎉</div>
-                    <h3 class="text-2xl font-bold text-green-600 mb-2">Challenge Complete!</h3>
-                    <p class="text-gray-600 mb-4">Congratulations on completing this challenge!</p>
-                    
-                    <div class="bg-green-50 rounded-lg p-4 mb-4">
-                        <div class="text-sm text-gray-600 mb-1">Points Earned</div>
-                        <div class="text-3xl font-bold text-green-600">+${data.score_earned || 0}</div>
-                    </div>
-                    
-                    ${data.new_score !== undefined ? `
-                        <div class="grid grid-cols-3 gap-3 mb-4 text-center">
-                            <div class="bg-gray-50 rounded p-2">
-                                <div class="text-xs text-gray-600">Total Score</div>
-                                <div class="text-lg font-bold text-gray-800">${data.new_score}</div>
-                            </div>
-                            <div class="bg-gray-50 rounded p-2">
-                                <div class="text-xs text-gray-600">Level</div>
-                                <div class="text-lg font-bold text-gray-800">${data.new_level || 1}</div>
-                            </div>
-                            <div class="bg-gray-50 rounded p-2">
-                                <div class="text-xs text-gray-600">Role</div>
-                                <div class="text-xs font-bold text-gray-800">${data.new_role || 'Trainee'}</div>
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="flex gap-2">
-                        <button onclick="SecureTrainerChallenges.backToChallenges()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
-                            More Challenges
-                        </button>
-                        <button onclick="window.location.href='/dashboard'" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
-                            View Dashboard
-                        </button>
-                    </div>
-                </div>
-                <button onclick="document.getElementById('completion-summary').remove()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        
-        // Remove any existing summary
-        const existing = document.getElementById('completion-summary');
-        if (existing) existing.remove();
-        
-        // Add new summary
-        document.body.insertAdjacentHTML('beforeend', summaryHTML);
-        
-        // Auto-remove after 30 seconds
-        setTimeout(() => {
-            const summary = document.getElementById('completion-summary');
-            if (summary) summary.remove();
-        }, 30000);
-    },
-
     // Go back to challenge selection
     backToChallenges() {
         // Check if we need to reload to update progress
         if (this.challengeCompleted) {
-            // Refresh progress bars WITHOUT full page reload
-            this.refreshProgressBars();
-            
-            // Store the completion flag
-            sessionStorage.setItem('progressUpdated', 'true');
+            window.location.reload();
+            return;
         }
 
         // Hide challenge interface
@@ -740,126 +612,6 @@ window.SecureTrainerChallenges = {
                 delete button.dataset.originalText;
             }
         }
-    },
-
-    // Refresh progress bars without full page reload
-    async refreshProgressBars() {
-        try {
-            const userId = this.currentUser.user_id || this.currentUser.id || this.currentUser._id;
-            if (!userId) {
-                console.error('No user ID found for progress refresh');
-                return;
-            }
-
-            // Fetch fresh user data
-            const response = await fetch(`/api/user/${userId}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch user data');
-            }
-
-            const data = await response.json();
-            if (!data.success || !data.user) {
-                throw new Error('Invalid user data received');
-            }
-
-            const user = data.user;
-            const completedChallenges = user.challenges_completed || [];
-
-            // Define categories and their challenge loaders
-            const categories = {
-                'sql_injection': { total: 10, prefix: 'sql_' },
-                'xss': { total: 10, prefix: 'xss_' },
-                'command_injection': { total: 10, prefix: 'cmd_' },
-                'authentication': { total: 10, prefix: 'auth_' },
-                'csrf': { total: 10, prefix: 'csrf_' }
-            };
-
-            // Update each category's progress bar
-            Object.entries(categories).forEach(([category, config]) => {
-                // Count completed challenges for this category
-                const completedCount = completedChallenges.filter(id => 
-                    id.startsWith(config.prefix)
-                ).length;
-
-                const percent = Math.round((completedCount / config.total) * 100);
-
-                // Update progress bar width
-                const progressBar = document.querySelector(
-                    `.bg-${this.getCategoryColor(category)}-600.h-2.rounded-full`
-                );
-                if (progressBar && progressBar.closest('.mb-4')?.querySelector('span')?.textContent.includes(this.getCategoryDisplayName(category))) {
-                    progressBar.style.width = `${percent}%`;
-                    progressBar.style.transition = 'width 0.5s ease-in-out';
-                }
-
-                // Update percentage text
-                const percentText = progressBar?.closest('.mb-4')?.querySelector('.font-bold');
-                if (percentText) {
-                    percentText.textContent = `${percent}%`;
-                }
-
-                // Update completion count
-                const countText = progressBar?.closest('.mb-4')?.querySelector('.text-xs.text-gray-500');
-                if (countText) {
-                    countText.textContent = `${completedCount}/${config.total} completed`;
-                }
-
-                // Add/remove completion badge
-                const badgeContainer = progressBar?.closest('.mb-4')?.querySelector('.flex.justify-between.items-center');
-                if (badgeContainer) {
-                    const existingBadge = badgeContainer.querySelector('.bg-green-100');
-                    if (percent === 100 && !existingBadge) {
-                        // Add completion badge
-                        badgeContainer.insertAdjacentHTML('beforeend', 
-                            '<span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>'
-                        );
-                    } else if (percent < 100 && existingBadge) {
-                        // Remove completion badge
-                        existingBadge.remove();
-                    }
-                }
-            });
-
-            console.log('✅ Progress bars refreshed successfully');
-            this.showMessage('Progress updated!', 'success');
-
-        } catch (error) {
-            console.error('Error refreshing progress bars:', error);
-            // Fallback to page reload if refresh fails
-            console.log('Falling back to page reload...');
-            setTimeout(() => {
-                window.location.href = '/challenges';
-            }, 1000);
-        }
-    },
-
-    // Get category color for progress bars
-    getCategoryColor(category) {
-        const colors = {
-            'sql_injection': 'red',
-            'xss': 'yellow',
-            'command_injection': 'purple',
-            'authentication': 'blue',
-            'csrf': 'green'
-        };
-        return colors[category] || 'gray';
-    },
-
-    // Get category display name
-    getCategoryDisplayName(category) {
-        const names = {
-            'sql_injection': 'Progress',
-            'xss': 'Progress',
-            'command_injection': 'Progress',
-            'authentication': 'Progress',
-            'csrf': 'Progress'
-        };
-        return names[category] || 'Progress';
     },
 
     // Show message to user

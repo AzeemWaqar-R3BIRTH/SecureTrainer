@@ -55,15 +55,6 @@ SecureTrainer.LearningCenter = {
 
         if (prevBtn) prevBtn.addEventListener('click', () => this.navigateContent('prev'));
         if (nextBtn) nextBtn.addEventListener('click', () => this.navigateContent('next'));
-
-        // Module completion checkbox handler
-        document.addEventListener('change', (event) => {
-            if (event.target.classList.contains('module-complete-checkbox')) {
-                const moduleId = event.target.dataset.moduleId;
-                const isChecked = event.target.checked;
-                this.handleModuleCompletion(moduleId, isChecked);
-            }
-        });
     },
 
     // Load initial content
@@ -182,7 +173,16 @@ SecureTrainer.LearningCenter = {
         }
 
         if (content.sections) {
-            content.sections.forEach(section => {
+            const completedSections = content.user_progress?.completed_sections || [];
+            const totalSections = content.sections.length;
+            const allCompleted = completedSections.length === totalSections && totalSections > 0;
+            
+            console.log(`[CHECKBOX] Module ${content.id}: completed=${completedSections.length}/${totalSections}, allCompleted=${allCompleted}`);
+            console.log(`[CHECKBOX] Completed sections:`, completedSections);
+            console.log(`[CHECKBOX] All section IDs:`, content.sections.map(s => s.id));
+            
+            content.sections.forEach((section, index) => {
+                const isCompleted = completedSections.includes(section.id);
                 html += `<div class="mb-8 section-block" id="${section.id}">`;
 
                 if (section.title) {
@@ -261,33 +261,30 @@ SecureTrainer.LearningCenter = {
 
                 html += `</div>`;
             });
-        }
-
-        // Add completion checkbox at the end
-        // Check if module is already completed from user_progress
-        const isCompleted = content.user_progress && content.user_progress.is_complete ? 'checked' : '';
-        
-        html += `
-            <div class="module-completion-section" style="margin-top: 3rem; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 1rem; text-align: center;">
-                <div style="background: rgba(255,255,255,0.95); padding: 2rem; border-radius: 0.75rem;">
-                    <h3 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">
-                        <i class="fas fa-check-circle" style="color: #10b981; margin-right: 0.5rem;"></i>
-                        Mark Module as Complete
-                    </h3>
-                    <p style="color: #6b7280; margin-bottom: 1.5rem;">
-                        I have finished reviewing all the content in this module
-                    </p>
-                    <label class="completion-checkbox-label" style="display: inline-flex; align-items: center; cursor: pointer; font-size: 1.1rem; font-weight: 600; color: #374151;">
-                        <input type="checkbox" id="module-complete-checkbox-${content.id}" 
-                               class="module-complete-checkbox" 
-                               data-module-id="${content.id}"
-                               ${isCompleted}
-                               style="width: 24px; height: 24px; margin-right: 0.75rem; cursor: pointer; accent-color: #10b981;">
-                        <span>I have completed this module</span>
-                    </label>
+            
+            // Add ONE completion checkbox at the very end of all sections
+            html += `
+                <div class="mt-8 pt-6 border-t-2 border-gray-300 flex items-center justify-center bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg shadow-md">
+                    <div class="flex items-center space-x-4">
+                        <label class="checkbox-container group cursor-pointer flex items-center space-x-4">
+                            <input type="checkbox" 
+                                   class="module-checkbox hidden" 
+                                   data-module-id="${content.id}"
+                                   ${allCompleted ? 'checked' : ''}
+                                   onchange="SecureTrainer.LearningCenter.toggleModuleCompletion(this, '${content.id}')">
+                            <div class="checkbox-visual w-8 h-8 border-2 border-gray-400 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                                allCompleted ? 'bg-green-500 border-green-500' : 'bg-white group-hover:border-blue-500'
+                            }">
+                                ${allCompleted ? '<i class="fas fa-check text-white text-lg"></i>' : ''}
+                            </div>
+                            <span class="text-lg font-semibold ${allCompleted ? 'text-green-600' : 'text-gray-800 group-hover:text-blue-600'} transition-colors">
+                                ${allCompleted ? 'Module Completed! ✨' : 'Mark module as complete'}
+                            </span>
+                        </label>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
 
         return html;
     },
@@ -411,68 +408,69 @@ SecureTrainer.LearningCenter = {
 
     // Update progress display
     updateProgressDisplay(progressData) {
+        console.log('📊 Updating progress display:', progressData);
+        
         // Update overall stats
         if (progressData.overall) {
+            // Overall progress percentage
             const totalProgress = document.getElementById('total-progress');
-            if (totalProgress) totalProgress.textContent = `${progressData.overall.percentage}%`;
+            if (totalProgress) totalProgress.textContent = `${Math.round(progressData.overall.percentage)}%`;
 
             const overallBar = document.getElementById('overall-learning-bar');
             if (overallBar) overallBar.style.width = `${progressData.overall.percentage}%`;
 
             const overallText = document.getElementById('overall-learning-progress');
-            if (overallText) overallText.textContent = `${progressData.overall.percentage}%`;
+            if (overallText) overallText.textContent = `${Math.round(progressData.overall.percentage)}%`;
             
-            // Update hero section study time
-            const studyTimeElement = document.getElementById('study-time');
-            if (studyTimeElement && progressData.overall.total_study_time) {
-                const hours = Math.floor(progressData.overall.total_study_time / 3600);
-                const minutes = Math.floor((progressData.overall.total_study_time % 3600) / 60);
+            // Study time
+            const studyTime = document.getElementById('study-time');
+            if (studyTime) {
+                const hours = Math.round(progressData.overall.total_study_time / 60);
+                const minutes = progressData.overall.total_study_time % 60;
                 if (hours > 0) {
-                    studyTimeElement.textContent = `${hours}.${Math.floor(minutes / 6)}h`;
+                    studyTime.textContent = `${hours}h ${minutes}m`;
                 } else {
-                    studyTimeElement.textContent = `${minutes}m`;
+                    studyTime.textContent = `${minutes}m`;
                 }
             }
         }
 
-        // Update module stats and count completed modules
-        let completedCount = 0;
-        let totalModules = 0;
-        
+        // Update module stats
         if (progressData.modules) {
-            totalModules = Object.keys(progressData.modules).length;
+            let completedModules = 0;
+            const totalModules = Object.keys(progressData.modules).length;
             
             Object.entries(progressData.modules).forEach(([moduleId, data]) => {
                 const progressBar = document.getElementById(`${moduleId}-learning-bar`);
                 const progressText = document.getElementById(`${moduleId}-learning-progress`);
 
                 if (progressBar) progressBar.style.width = `${data.percentage}%`;
-                if (progressText) progressText.textContent = `${data.percentage}%`;
+                if (progressText) progressText.textContent = `${Math.round(data.percentage)}%`;
                 
-                // Count completed modules (100% progress AND is_complete flag)
-                if (data.is_complete && data.percentage >= 100) {
-                    completedCount++;
+                // Count completed modules (100%)
+                if (data.percentage >= 100) {
+                    completedModules++;
                 }
             });
-        }
-        
-        // Update hero section "MODULES COMPLETED" stat
-        const completedModulesElement = document.getElementById('completed-modules');
-        if (completedModulesElement) {
-            completedModulesElement.textContent = completedCount;
-        }
-        
-        // Update navigation progress text
-        const navProgressText = document.getElementById('nav-progress-text');
-        if (navProgressText) {
-            navProgressText.textContent = `${completedCount} of ${totalModules} completed`;
-        }
-        
-        // Update navigation progress bar
-        const navProgressFill = document.getElementById('nav-progress-fill');
-        if (navProgressFill && totalModules > 0) {
-            const navPercentage = (completedCount / totalModules) * 100;
-            navProgressFill.style.width = `${navPercentage}%`;
+            
+            // Update "3 of 6 completed" text
+            const completedModulesDisplay = document.getElementById('completed-modules');
+            if (completedModulesDisplay) {
+                completedModulesDisplay.textContent = completedModules;
+            }
+            
+            // Update nav progress text
+            const navProgressText = document.getElementById('nav-progress-text');
+            if (navProgressText) {
+                navProgressText.textContent = `${completedModules} of ${totalModules} completed`;
+            }
+            
+            // Update progress bar
+            const navProgressFill = document.querySelector('.nav-progress-fill');
+            if (navProgressFill) {
+                const percentage = (completedModules / totalModules) * 100;
+                navProgressFill.style.width = `${percentage}%`;
+            }
         }
     },
 
@@ -502,69 +500,149 @@ SecureTrainer.LearningCenter = {
         }
     },
 
-    async handleModuleCompletion(moduleId, isComplete) {
-        try {
-            console.log(`Marking module ${moduleId} as ${isComplete ? 'complete' : 'incomplete'}`);
-            
-            const response = await fetch(`/api/learning/module/${moduleId}/complete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ completed: isComplete })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // Reload progress to update UI
-                await this.loadProgressData();
-                
-                // Show success message
-                this.showCompletionMessage(isComplete);
-            } else {
-                console.error('Failed to update completion status:', data.error);
-                // Revert checkbox
-                const checkbox = document.querySelector(`[data-module-id="${moduleId}"]`);
-                if (checkbox) checkbox.checked = !isComplete;
-            }
-        } catch (error) {
-            console.error('Error updating module completion:', error);
-            // Revert checkbox
-            const checkbox = document.querySelector(`[data-module-id="${moduleId}"]`);
-            if (checkbox) checkbox.checked = !isComplete;
-        }
-    },
-
-    showCompletionMessage(isComplete) {
-        const message = document.createElement('div');
-        message.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${isComplete ? '#10b981' : '#6b7280'};
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            z-index: 10000;
-            animation: slideIn 0.3s ease-out;
-        `;
-        message.innerHTML = `
-            <i class="fas fa-${isComplete ? 'check' : 'times'}-circle" style="margin-right: 0.5rem;"></i>
-            Module marked as ${isComplete ? 'complete' : 'incomplete'}!
-        `;
-        document.body.appendChild(message);
-        
-        setTimeout(() => {
-            message.style.animation = 'slideOut 0.3s ease-out';
-            setTimeout(() => message.remove(), 300);
-        }, 3000);
-    },
-
     navigateContent(direction) {
         // Logic to find next/prev section based on currentSection
         // and calling loadContent with the new ID
+    },
+
+    // Toggle module completion (marks all sections as complete/incomplete)
+    async toggleModuleCompletion(checkbox, moduleId) {
+        const isCompleted = checkbox.checked;
+        console.log(`[INFO] Toggling module completion: ${moduleId} -> ${isCompleted}`);
+        
+        // Update visual state immediately
+        const label = checkbox.closest('.checkbox-container');
+        const visualCheckbox = label.querySelector('.checkbox-visual');
+        const statusText = label.querySelector('span');
+        
+        if (isCompleted) {
+            visualCheckbox.classList.remove('bg-white', 'group-hover:border-blue-500');
+            visualCheckbox.classList.add('bg-green-500', 'border-green-500');
+            visualCheckbox.innerHTML = '<i class="fas fa-check text-white text-lg"></i>';
+            statusText.classList.remove('text-gray-800', 'group-hover:text-blue-600');
+            statusText.classList.add('text-green-600');
+            statusText.textContent = 'Module Completed! ✨';
+        } else {
+            visualCheckbox.classList.remove('bg-green-500', 'border-green-500');
+            visualCheckbox.classList.add('bg-white', 'group-hover:border-blue-500');
+            visualCheckbox.innerHTML = '';
+            statusText.classList.remove('text-green-600');
+            statusText.classList.add('text-gray-800', 'group-hover:text-blue-600');
+            statusText.textContent = 'Mark module as complete';
+        }
+        
+        try {
+            // Get all sections for this module
+            const response = await fetch(`/api/learning/content/${moduleId}`);
+            const data = await response.json();
+            
+            if (!data.success || !data.content) {
+                throw new Error('Failed to load module content');
+            }
+            
+            const sections = data.content.sections || [];
+            console.log(`[INFO] Module has ${sections.length} sections`);
+            
+            // Mark all sections as complete/incomplete
+            for (const section of sections) {
+                const sectionResponse = await fetch(`/api/learning/progress/${moduleId}/${section.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        completed: isCompleted
+                    })
+                });
+                
+                const sectionData = await sectionResponse.json();
+                if (!sectionData.success) {
+                    console.error(`[ERROR] Failed to update section ${section.id}`);
+                }
+            }
+            
+            console.log('[SUCCESS] All sections updated, refreshing progress...');
+            
+            // Clear the server-side enhanced learning cache
+            try {
+                await fetch('/api/learning/clear-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ module_id: moduleId })
+                });
+                console.log('[INFO] Server cache cleared');
+            } catch (cacheError) {
+                console.log('[WARNING] Failed to clear server cache:', cacheError);
+            }
+            
+            // Clear cache for this module to force refresh
+            this.contentCache.delete(moduleId);
+            
+            // Refresh progress data - this will update all the stats
+            await this.loadProgressData();
+            
+            // Reload the current content to show updated checkbox state
+            await this.loadContent(moduleId);
+            
+            console.log('[SUCCESS] Progress updated and content reloaded');
+        } catch (error) {
+            console.error('[ERROR] Error updating module completion:', error);
+            // Revert checkbox state
+            checkbox.checked = !isCompleted;
+            // Revert visual state
+            if (!isCompleted) {
+                visualCheckbox.classList.remove('bg-white', 'group-hover:border-blue-500');
+                visualCheckbox.classList.add('bg-green-500', 'border-green-500');
+                visualCheckbox.innerHTML = '<i class="fas fa-check text-white text-lg"></i>';
+                statusText.classList.remove('text-gray-800', 'group-hover:text-blue-600');
+                statusText.classList.add('text-green-600');
+                statusText.textContent = 'Module Completed! ✨';
+            } else {
+                visualCheckbox.classList.remove('bg-green-500', 'border-green-500');
+                visualCheckbox.classList.add('bg-white', 'group-hover:border-blue-500');
+                visualCheckbox.innerHTML = '';
+                statusText.classList.remove('text-green-600');
+                statusText.classList.add('text-gray-800', 'group-hover:text-blue-600');
+                statusText.textContent = 'Mark module as complete';
+            }
+        }
+    },
+
+    // Update module completion count in sidebar
+    async updateModuleCompletionCount(moduleId) {
+        try {
+            // Reload the current content to get updated completion status
+            const response = await fetch(`/api/learning/content/${moduleId}`);
+            const data = await response.json();
+            
+            if (data.success && data.content) {
+                const completedSections = data.content.user_progress?.completed_sections || [];
+                const totalSections = data.content.sections?.length || 0;
+                const completedCount = completedSections.length;
+                
+                console.log(`📈 Module ${moduleId}: ${completedCount}/${totalSections} sections completed`);
+                
+                // Update nav progress indicator dots
+                const navLink = document.querySelector(`[data-content="${moduleId}"]`);
+                if (navLink) {
+                    const progressIndicator = navLink.querySelector('.nav-progress-indicator');
+                    if (progressIndicator) {
+                        const dots = progressIndicator.querySelectorAll('.progress-dot');
+                        dots.forEach((dot, index) => {
+                            if (index < completedCount) {
+                                dot.classList.add('completed');
+                            } else {
+                                dot.classList.remove('completed');
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error updating module completion count:', error);
+        }
     }
 };
 

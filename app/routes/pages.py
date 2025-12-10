@@ -7,13 +7,6 @@ from flask import Blueprint, render_template, session, redirect, url_for
 from app.models.user_model import get_user_by_id
 from app.models.analytics_model import get_dashboard_analytics
 from app.routes.learning import get_user_learning_progress
-from app.models.challenge_model import (
-    load_sql_challenges,
-    get_xss_challenges,
-    get_command_injection_challenges,
-    get_authentication_challenges,
-    get_csrf_challenges
-)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -184,13 +177,15 @@ def challenges_page():
         if not user:
             return redirect(url_for('pages.login_page'))
         
-        # Get challenges by category
+        # Get challenges by category from DATABASE, not hardcoded functions
+        from app.models.challenge_model import get_challenges_by_category
+        
         challenges_by_category = {
-            'sql_injection': load_sql_challenges(),
-            'xss': get_xss_challenges(),
-            'command_injection': get_command_injection_challenges(),
-            'authentication': get_authentication_challenges(),
-            'csrf': get_csrf_challenges()
+            'sql_injection': get_challenges_by_category('sql_injection'),
+            'xss': get_challenges_by_category('xss'),
+            'command_injection': get_challenges_by_category('command_injection'),
+            'authentication': get_challenges_by_category('authentication'),
+            'csrf': get_challenges_by_category('csrf')
         }
 
         # Get completed challenges
@@ -198,29 +193,15 @@ def challenges_page():
         
         # Calculate progress stats for each category
         category_stats = {}
-        
-        # Log user's completed challenges for debugging
-        logger.info(f"========== PROGRESS BAR CALCULATION ==========")
-        logger.info(f"User ID: {user_id}")
-        logger.info(f"User has {len(completed_challenges)} completed challenges")
-        logger.info(f"Completed IDs: {completed_challenges}")
-        
         for category, challenges in challenges_by_category.items():
             total = len(challenges)
             # Count how many challenges in this category are completed
+            # We check if the challenge ID is in the user's completed_challenges list
             completed_count = 0
             challenge_ids = [c['id'] for c in challenges]
-            
-            logger.info(f"\n--- Category: {category.upper()} ---")
-            logger.info(f"Total challenges: {total}")
-            logger.info(f"Challenge IDs: {challenge_ids}")
-            
-            # Match completed challenges with this category's challenges
-            matched_ids = []
             for completed_id in completed_challenges:
                 if completed_id in challenge_ids:
                     completed_count += 1
-                    matched_ids.append(completed_id)
             
             percent = int((completed_count / total * 100)) if total > 0 else 0
             
@@ -229,12 +210,6 @@ def challenges_page():
                 'completed': completed_count,
                 'percent': percent
             }
-            
-            logger.info(f"Matched {completed_count}/{total} challenges")
-            logger.info(f"Matched IDs: {matched_ids}")
-            logger.info(f"Progress: {percent}%")
-        
-        logger.info(f"\n========== END CALCULATION ==========")
 
         return render_template('challenges.html', 
                              user=user,

@@ -18,6 +18,7 @@ from bson import ObjectId
 from app.utils.security import hash_password
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_api_bp = Blueprint('admin_api', __name__, url_prefix='/api/admin')
 
 # Enhanced admin authentication with role checking
 def is_admin(token=None, user_id=None):
@@ -56,6 +57,98 @@ def require_admin(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+@admin_bp.route('/register', methods=['GET', 'POST'])
+def admin_register():
+    """Admin registration page."""
+    if request.method == 'POST':
+        try:
+            # Validate registration token first
+            registration_token = request.form.get('registration_token', '')
+            expected_token = os.getenv('ADMIN_REGISTRATION_TOKEN', 'SecureAdmin2024!Registration@Token#XYZ789')
+            
+            if registration_token != expected_token:
+                flash('Invalid registration token. Admin registration requires a valid token.', 'error')
+                return render_template('admin/register.html')
+            
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            first_name = request.form.get('first_name', '')
+            last_name = request.form.get('last_name', '')
+            
+            from app.models.analytics_model import get_db
+            db = get_db()
+            
+            # Check if username or email already exists
+            existing_user = db.users.find_one({'$or': [{'username': username}, {'email': email}]})
+            if existing_user:
+                flash('Username or email already exists', 'error')
+                return render_template('admin/register.html')
+            
+            # Create admin user
+            admin_user = {
+                'username': username,
+                'password': hash_password(password),
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name,
+                'is_admin': True,
+                'role': 'admin',
+                'company': request.form.get('company', ''),
+                'department': request.form.get('department', 'Administration'),
+                'score': 0,
+                'level': 1,
+                'challenges_completed': [],
+                'achievements': [],
+                'created_at': datetime.now()
+            }
+            
+            result = db.users.insert_one(admin_user)
+            user_id = str(result.inserted_id)
+            
+            # Generate and send QR code using the same logic as normal user registration
+            try:
+                from app.utils.qr import QRCodeManager
+                from securetrainer import email_manager
+                
+                qr_manager = QRCodeManager()
+                
+                # Generate QR code
+                qr_data = qr_manager.generate_qr_code(user_id, email)
+                
+                if qr_data:
+                    # Send ADMIN welcome email with QR code (different from regular users)
+                    print(f"[INFO] Attempting to send admin QR email to {email}")
+                    email_result = email_manager.send_admin_welcome_email(
+                        email, 
+                        f"{first_name} {last_name}", 
+                        qr_data
+                    )
+                    print(f"[INFO] Admin email send result: {email_result}")
+                    
+                    if email_result:
+                        flash('Admin account created successfully! QR code sent to your email.', 'success')
+                    else:
+                        flash('Admin account created but email failed to send. Check your email configuration.', 'warning')
+                else:
+                    flash('Admin account created but QR code generation failed.', 'warning')
+            except Exception as qr_error:
+                print(f"[ERROR] QR/Email error for admin: {qr_error}")
+                import traceback
+                traceback.print_exc()
+                flash('Admin account created but QR code setup failed. Please contact support.', 'warning')
+            
+            # Redirect to login page instead of auto-login
+            return redirect(url_for('admin.admin_login'))
+            
+        except Exception as e:
+            print(f"Error creating admin account: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(f'Error creating admin account: {str(e)}', 'error')
+    
+    return render_template('admin/register.html')
+
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def admin_login():
     """Admin login page."""
@@ -63,152 +156,54 @@ def admin_login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # Basic auth check (should be enhanced)
+        print(f"[DEBUG] Admin login attempt for username: {username}")
+        
+        # Basic auth check
         from app.models.analytics_model import get_db
+        from app.utils.security import verify_password
+        
         db = get_db()
         user = db.users.find_one({'username': username})
         
-        if user and user.get('password') == hash_password(password):
-            if user.get('is_admin', False) or user.get('role') in ['admin', 'Department Head']:
-                session['user_id'] = str(user['_id'])
-                session['is_admin'] = True
-                return redirect(url_for('admin.admin_dashboard'))
+        if user:
+            print(f"[DEBUG] User found: {username}, is_admin: {user.get('is_admin')}, role: {user.get('role')}")
+            stored_password_hash = user.get('password')
+            
+            # Use verify_password to properly check bcrypt hash
+            if verify_password(password, stored_password_hash):
+                print(f"[DEBUG] Password verified successfully")
+                
+                # Check if user has admin privileges
+                if user.get('is_admin', False) or user.get('role') in ['admin', 'Department Head', 'Security Architect', 'Chief Security Officer']:
+                    # Create complete session data
+                    session['user_id'] = str(user['_id'])
+                    session['username'] = user.get('username', '')
+                    session['email'] = user.get('email', '')
+                    session['is_admin'] = True
+                    session['role'] = user.get('role', 'admin')
+                    session['level'] = user.get('level', 1)
+                    session['score'] = user.get('score', 0)
+                    session['department'] = user.get('department', '')
+                    session['company'] = user.get('company', '')
+                    session['session_start'] = datetime.now().isoformat()
+                    session['last_activity'] = datetime.now().isoformat()
+                    session.permanent = True
+                    session.modified = True
+                    
+                    print(f"[SUCCESS] Admin login successful for {username}")
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('admin.admin_dashboard'))
+                else:
+                    print(f"[ERROR] User {username} is not an admin")
+                    flash('Access denied: Admin privileges required', 'error')
             else:
-                flash('Access denied: Not an admin', 'error')
+                print(f"[ERROR] Password verification failed for {username}")
+                flash('Invalid credentials', 'error')
         else:
+            print(f"[DEBUG] User not found: {username}")
             flash('Invalid credentials', 'error')
             
     return render_template('admin/login.html')
-
-@admin_bp.route('/register', methods=['GET', 'POST'])
-def admin_register():
-    """Secure admin registration page requiring environment token."""
-    if request.method == 'POST':
-        try:
-            # Get form data
-            registration_token = request.form.get('registration_token')
-            first_name = request.form.get('first_name')
-            last_name = request.form.get('last_name')
-            username = request.form.get('username')
-            email = request.form.get('email')
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
-            company = request.form.get('company', 'SecureTrainer')
-            department = request.form.get('department', 'Administration')
-            
-            # Validate registration token
-            admin_reg_token = os.getenv('ADMIN_REGISTRATION_TOKEN')
-            if not admin_reg_token:
-                flash('Admin registration is not configured. Contact system administrator.', 'error')
-                return render_template('admin/register.html')
-            
-            if registration_token != admin_reg_token:
-                flash('Invalid registration token. Admin registration denied.', 'error')
-                return render_template('admin/register.html')
-            
-            # Validate required fields
-            if not all([first_name, last_name, username, email, password, confirm_password]):
-                flash('All fields are required.', 'error')
-                return render_template('admin/register.html')
-            
-            # Validate password match
-            if password != confirm_password:
-                flash('Passwords do not match.', 'error')
-                return render_template('admin/register.html')
-            
-            # Validate password strength
-            if len(password) < 8:
-                flash('Password must be at least 8 characters long.', 'error')
-                return render_template('admin/register.html')
-            
-            # Check if username or email already exists
-            from app.models.analytics_model import get_db
-            db = get_db()
-            
-            if db.users.find_one({'username': username}):
-                flash('Username already exists.', 'error')
-                return render_template('admin/register.html')
-            
-            if db.users.find_one({'email': email}):
-                flash('Email already exists.', 'error')
-                return render_template('admin/register.html')
-            
-            # Create admin user
-            admin_user = {
-                "first_name": first_name,
-                "last_name": last_name,
-                "username": username,
-                "email": email,
-                "password": hash_password(password),
-                "company": company,
-                "department": department,
-                "score": 0,
-                "level": 1,
-                "role": "Chief Security Officer",
-                "is_admin": True,
-                "admin_role": "admin",
-                "created_at": datetime.now(),
-                "challenges_completed": [],
-                "achievements": []
-            }
-            
-            # Insert user into database
-            user_id = insert_user(admin_user)
-            
-            # Generate QR code with error handling
-            qr_data = None
-            try:
-                from app.utils.qr import QRCodeManager
-                qr_manager = QRCodeManager()
-                qr_data = qr_manager.generate_qr_code(user_id, email)
-                print(f"✅ QR code generated successfully for admin: {username}")
-            except Exception as e:
-                print(f"❌ QR code generation failed: {e}")
-                import traceback
-                traceback.print_exc()
-                flash('Admin account created but QR code generation failed. Please contact support.', 'warning')
-            
-            # Send welcome email with QR code
-            if qr_data:
-                try:
-                    from app.utils.email import EmailManager
-                    from flask_mail import Mail
-                    from flask import current_app
-                    
-                    # Get mail instance from current app
-                    mail = Mail()
-                    mail.init_app(current_app)
-                    
-                    email_manager = EmailManager(mail)
-                    email_sent = email_manager.send_admin_welcome_email(email, f"{first_name} {last_name}", qr_data)
-                    
-                    if email_sent:
-                        print(f"✅ Admin welcome email sent to {email}")
-                        flash('Admin account created successfully! Check your email for the QR code.', 'success')
-                    else:
-                        print(f"⚠️ Failed to send admin welcome email to {email}")
-                        flash('Admin account created but email sending failed. Please contact support for your QR code.', 'warning')
-                        
-                except Exception as e:
-                    print(f"❌ Email sending error: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    flash('Admin account created but email sending failed. Please contact support for your QR code.', 'warning')
-            else:
-                flash('Admin account created but QR code generation failed. Please contact support.', 'warning')
-            
-            # Redirect to login page
-            return redirect(url_for('admin.admin_login'))
-            
-        except Exception as e:
-            print(f"Error during admin registration: {e}")
-            import traceback
-            traceback.print_exc()
-            flash('An error occurred during registration. Please try again.', 'error')
-            return render_template('admin/register.html')
-    
-    # GET request - show registration form
-    return render_template('admin/register.html')
 
 @admin_bp.route('/dashboard', methods=['GET'])
 @require_admin
@@ -218,8 +213,26 @@ def admin_dashboard():
         # Get system analytics
         system_analytics = get_system_analytics()
         
+        # Transform system analytics to match template expectations
+        system_stats = {
+            'total_users': system_analytics.get('overview', {}).get('total_users', 0),
+            'active_users_24h': system_analytics.get('overview', {}).get('active_users', 0),
+            'total_challenges': system_analytics.get('overview', {}).get('total_challenges', 0),
+            'total_attempts': system_analytics.get('overview', {}).get('total_attempts', 0),
+            'successful_attempts': system_analytics.get('overview', {}).get('successful_attempts', 0)
+        }
+        
         # Get challenge statistics
         challenge_stats_raw = get_challenge_statistics()
+        
+        # Calculate total completions and avg success rate from system analytics
+        challenge_stats = {
+            'total': challenge_stats_raw.get('total', 0),
+            'by_category': challenge_stats_raw.get('by_category', {}),
+            'by_difficulty': challenge_stats_raw.get('by_difficulty', {}),
+            'total_completions': system_analytics.get('overview', {}).get('successful_attempts', 0),
+            'avg_success_rate': round(system_analytics.get('overview', {}).get('overall_success_rate', 0), 1)
+        }
         
         # Get top performing users
         top_users = get_top_users(limit=10)
@@ -228,11 +241,10 @@ def admin_dashboard():
         from app.models.analytics_model import get_db
         db = get_db()
         week_ago = datetime.now() - timedelta(days=7)
-        day_ago = datetime.now() - timedelta(hours=24)
         
         recent_activity = {
-            'new_users': db.users.count_documents({'created_at': {'$gte': week_ago}}),
-            'challenges_attempted': db.challenge_attempts.count_documents({'attempt_time': {'$gte': week_ago}}),
+            'new_users': system_analytics.get('growth_metrics', {}).get('new_users_7d', 0),
+            'challenges_attempted': system_analytics.get('growth_metrics', {}).get('new_attempts_7d', 0),
             'successful_attempts': db.challenge_attempts.count_documents({
                 'attempt_time': {'$gte': week_ago},
                 'is_correct': True
@@ -244,41 +256,19 @@ def admin_dashboard():
         department_overview = []
         
         for dept in departments[:10]:  # Limit to top 10 departments
-            dept_analytics = get_department_analytics(dept)
-            if dept_analytics:
-                department_overview.append({
-                    'department': dept,
-                    'total_users': dept_analytics.get('total_users', 0),
-                    'average_score': dept_analytics.get('average_score', 0),
-                    'success_rate': dept_analytics.get('success_rate', 0)
-                })
+            if dept:  # Skip empty departments
+                dept_analytics = get_department_analytics(dept)
+                if dept_analytics:
+                    department_overview.append({
+                        'department': dept,
+                        'total_users': dept_analytics.get('total_users', 0),
+                        'average_score': dept_analytics.get('average_score', 0),
+                        'success_rate': round(dept_analytics.get('success_rate', 0), 1)
+                    })
         
-        # Extract overview data from system_analytics
-        overview = system_analytics.get('overview', {})
-        
-        # Active users in last 24 hours
-        active_users_24h = len(db.challenge_attempts.distinct('user_id', {
-            'attempt_time': {'$gte': day_ago}
-        }))
-        
-        # Calculate total challenge completions from challenge_attempts
-        total_completions = db.challenge_attempts.count_documents({'is_correct': True})
-        
-        # Flatten the data structure for template
         dashboard_data = {
-            'system_statistics': {
-                'total_users': overview.get('total_users', 0),
-                'active_users_24h': active_users_24h,
-                'total_challenges': overview.get('total_challenges', 0),
-                'total_attempts': overview.get('total_attempts', 0)
-            },
-            'challenge_statistics': {
-                'total': challenge_stats_raw.get('total', 0),
-                'total_completions': total_completions,
-                'avg_success_rate': round(overview.get('overall_success_rate', 0), 1),
-                'by_category': challenge_stats_raw.get('by_category', {}),
-                'by_difficulty': challenge_stats_raw.get('by_difficulty', {})
-            },
+            'system_statistics': system_stats,
+            'challenge_statistics': challenge_stats,
             'top_users': top_users,
             'recent_activity': recent_activity,
             'department_overview': department_overview,
@@ -359,11 +349,32 @@ def add_user():
         try:
             data = request.form
             
+            # Check for duplicate username or email first
+            from app.models.analytics_model import get_db
+            db = get_db()
+            
+            username = data.get('username')
+            email = data.get('email')
+            
+            existing_user = db.users.find_one({
+                '$or': [
+                    {'username': username},
+                    {'email': email}
+                ]
+            })
+            
+            if existing_user:
+                if existing_user.get('username') == username:
+                    flash(f'Username "{username}" already exists. Please choose a different username.', 'error')
+                else:
+                    flash(f'Email "{email}" already exists. Please choose a different email.', 'error')
+                return render_template('admin/add_user.html', form_data=data)
+            
             user = {
                 "first_name": data.get('first_name'),
                 "last_name": data.get('last_name'),
-                "username": data.get('username'),
-                "email": data.get('email'),
+                "username": username,
+                "email": email,
                 "password": hash_password(data.get('password')),
                 "company": data.get('company'),
                 "department": data.get('department'),
@@ -374,12 +385,64 @@ def add_user():
                 "created_at": datetime.now()
             }
             
-            insert_user(user)
-            flash('User added successfully', 'success')
+            # Insert user and get user_id
+            user_id = insert_user(user)
+            
+            # Generate and send QR code using the same logic as normal user registration
+            try:
+                from app.utils.qr import QRCodeManager
+                from securetrainer import email_manager
+                
+                qr_manager = QRCodeManager()
+                
+                # Generate QR code
+                qr_data = qr_manager.generate_qr_code(user_id, email)
+                
+                if qr_data:
+                    # Send welcome email with QR code
+                    user_full_name = f"{data.get('first_name', '')} {data.get('last_name', '')}".strip() or username
+                    print(f"[INFO] Attempting to send QR email to {email} for user {user_id}")
+                    
+                    email_result = email_manager.send_welcome_email(
+                        email,
+                        user_full_name,
+                        qr_data
+                    )
+                    print(f"[INFO] Email send result: {email_result}")
+                    
+                    if email_result:
+                        flash(f'User added successfully! Welcome email with QR code sent to {email}', 'success')
+                    else:
+                        flash(f'User added successfully! However, email could not be sent. Please check email configuration.', 'warning')
+                else:
+                    flash('User added successfully! However, QR code generation failed.', 'warning')
+                    
+            except Exception as qr_error:
+                print(f"[ERROR] QR/Email error: {qr_error}")
+                import traceback
+                traceback.print_exc()
+                flash('User added successfully! However, QR code setup failed. Please contact support.', 'warning')
+            
             return redirect(url_for('admin.manage_users'))
             
         except Exception as e:
-            flash(f'Error adding user: {str(e)}', 'error')
+            print(f"[ERROR] Error adding user: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Handle MongoDB duplicate key error gracefully
+            error_message = str(e)
+            if 'duplicate key error' in error_message.lower():
+                if 'username' in error_message:
+                    flash(f'Username "{data.get("username")}" already exists. Please choose a different username.', 'error')
+                elif 'email' in error_message:
+                    flash(f'Email "{data.get("email")}" already exists. Please choose a different email.', 'error')
+                else:
+                    flash('A user with this information already exists. Please check username and email.', 'error')
+            else:
+                flash(f'Error adding user: {error_message}', 'error')
+            
+            return render_template('admin/add_user.html', form_data=data)
             
     return render_template('admin/add_user.html')
 
@@ -446,10 +509,22 @@ def delete_user(user_id):
         return redirect(url_for('admin.manage_users'))
 
 
-@admin_bp.route('/challenge', methods=['POST'])
+# API Routes (with /api prefix)
+@admin_api_bp.route('/challenge', methods=['POST'])
 @require_admin
-def create_challenge():
-    """Create a new challenge."""
+def api_create_challenge():
+    """API endpoint to create a new challenge."""
+    return create_challenge_logic()
+
+@admin_api_bp.route('/challenge/<challenge_id>', methods=['DELETE'])
+@require_admin
+def api_remove_challenge(challenge_id):
+    """API endpoint to delete a challenge."""
+    return remove_challenge_logic(challenge_id)
+
+# Shared logic functions
+def create_challenge_logic():
+    """Shared logic for creating challenges."""
     try:
         data = request.json
         
@@ -476,16 +551,16 @@ def create_challenge():
             'error': str(e)
         }), 400
     except Exception as e:
-        print(f"Error creating challenge: {e}")
+        print(f"[ERROR] Error creating challenge: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': 'Failed to create challenge'
         }), 500
 
-@admin_bp.route('/challenge/<challenge_id>', methods=['DELETE'])
-@require_admin
-def remove_challenge(challenge_id):
-    """Delete a challenge."""
+def remove_challenge_logic(challenge_id):
+    """Shared logic for deleting challenges."""
     try:
         success = delete_challenge(challenge_id)
         
@@ -501,11 +576,24 @@ def remove_challenge(challenge_id):
             }), 404
             
     except Exception as e:
-        print(f"Error deleting challenge: {e}")
+        print(f"[ERROR] Error deleting challenge: {e}")
         return jsonify({
             'success': False,
             'error': 'Failed to delete challenge'
         }), 500
+
+# Web Routes (with /admin prefix)
+@admin_bp.route('/challenge', methods=['POST'])
+@require_admin
+def create_challenge():
+    """Create a new challenge (web route)."""
+    return create_challenge_logic()
+
+@admin_bp.route('/challenge/<challenge_id>', methods=['DELETE'])
+@require_admin
+def remove_challenge(challenge_id):
+    """Delete a challenge (web route)."""
+    return remove_challenge_logic(challenge_id)
 
 
 @admin_bp.route('/challenges', methods=['GET'])
@@ -513,58 +601,40 @@ def remove_challenge(challenge_id):
 def all_challenges():
     """Get all challenges with detailed statistics."""
     try:
-        from app.models.challenge_model import get_all_challenges
-        
-        print("🔍 Fetching all challenges...")
-        
-        # Get all in-memory challenges
-        try:
-            challenges = get_all_challenges()
-            print(f"✅ Retrieved {len(challenges)} challenges")
-        except Exception as e:
-            print(f"❌ Error in get_all_challenges: {e}")
-            import traceback
-            traceback.print_exc()
-            return jsonify({
-                'success': False,
-                'error': f'Failed to load challenges: {str(e)}'
-            }), 500
+        challenges = list_challenges(active_only=True)
         
         # Add detailed statistics for each challenge
-        for i, challenge in enumerate(challenges):
+        for challenge in challenges:
             try:
-                challenge_id = challenge.get('id')
-                print(f"🔍 Processing challenge {i+1}/{len(challenges)}: {challenge_id}")
-                detailed_stats = get_challenge_statistics_detailed(challenge_id)
+                detailed_stats = get_challenge_statistics_detailed(challenge.get('_id', challenge.get('id')))
                 challenge['statistics'] = detailed_stats
             except Exception as e:
-                print(f"⚠️ Error getting stats for challenge {challenge.get('id')}: {e}")
-                # Provide default statistics
+                print(f"Error getting stats for challenge {challenge.get('id')}: {e}")
                 challenge['statistics'] = {
                     'total_attempts': 0,
                     'successful_attempts': 0,
                     'success_rate': 0
                 }
         
-        print(f"✅ Successfully processed all challenges")
-        
-        if request.is_json or request.args.get('format') == 'json':
+        # Check if JSON is requested
+        if request.is_json or request.accept_mimetypes.best == 'application/json':
             return jsonify({
                 'success': True,
                 'challenges': challenges,
                 'total_count': len(challenges)
             }), 200
-            
+        
+        # Return HTML template
         return render_template('admin/challenges.html', challenges=challenges)
         
     except Exception as e:
-        print(f"❌ Error in all_challenges route: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': f'Failed to get challenges: {str(e)}'
-        }), 500
+        print(f"Error getting challenges: {e}")
+        if request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to get challenges'
+            }), 500
+        return render_template('500.html'), 500
 
 @admin_bp.route('/user/<user_id>/analytics', methods=['GET'])
 @require_admin
@@ -750,21 +820,25 @@ def get_departments_overview():
         # Sort by total users
         departments_data.sort(key=lambda x: x.get('total_users', 0), reverse=True)
         
-        if request.is_json:
+        # Check if JSON is requested
+        if request.is_json or request.accept_mimetypes.best == 'application/json':
             return jsonify({
                 'success': True,
                 'departments': departments_data,
                 'total_departments': len(departments_data)
             }), 200
-            
+        
+        # Return HTML template
         return render_template('admin/departments.html', departments=departments_data)
         
     except Exception as e:
         print(f"Error getting departments overview: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to get departments overview'
-        }), 500
+        if request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to get departments overview'
+            }), 500
+        return render_template('500.html'), 500
 
 
 @admin_bp.route('/export/users', methods=['GET'])
@@ -833,9 +907,8 @@ def export_users_data():
             'error': 'Export failed'
         }), 500
 
-
 @admin_bp.route('/ml-management', methods=['GET'])
 @require_admin
 def ml_management():
-    """Render ML model management page."""
+    """Render the ML model management page."""
     return render_template('admin/ml_management.html')

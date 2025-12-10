@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-ui.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/hint-fix.css') }}?v={{ range(1, 10000) | random }}">
+    {% block head %}{% endblock %}
     <style>
         /* Quick inline styles */
         body {
@@ -34,6 +34,11 @@
 </head>
 
 <body class="bg-gray-100 text-gray-900">
+    {% set public_pages = ['/login', '/register', '/'] %}
+    {% set current_path = request.path %}
+    {% set is_public_page = current_path in public_pages %}
+    
+    {% if not is_public_page %}
     <header class="bg-blue-800 text-white shadow-md">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center">
@@ -80,10 +85,22 @@
             </div>
         </nav>
     </header>
+    {% endif %}
 
     <main class="container mx-auto px-6 py-8">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="bg-blue-800 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <div class="flex items-center justify-center mb-2">
+                <i class="fas fa-shield-alt text-xl mr-2"></i>
+                <span class="text-lg font-bold">SecureTrainer</span>
+            </div>
+            <p class="text-blue-200">&copy; 2025 SecureTrainer. All rights reserved.</p>
+            <p class="text-blue-300 text-sm mt-1">Cybersecurity Awareness Training Platform</p>
+        </div>
+    </footer>
 
     <!-- CSRF Token for security -->
     {% if csrf_token is defined and csrf_token %}

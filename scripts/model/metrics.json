@@ -1,6 +1,6 @@
 {
-  "accuracy": 0.0,
-  "training_date": "2025-12-06T22:18:13.186939",
+  "accuracy": 0.975,
+  "training_date": "2025-12-08T22:15:46.051026",
   "model_config": {
     "n_estimators": 100,
     "max_depth": 10,
@@ -9,63 +9,92 @@
     "random_state": 42,
     "n_jobs": -1
   },
-  "training_samples": 2,
+  "training_samples": 2000,
   "classes": [
     "advanced",
     "beginner",
-    "expert"
+    "expert",
+    "intermediate"
   ],
   "classification_report": {
     "advanced": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 0.0
+      "precision": 0.9356435643564357,
+      "recall": 0.9402985074626866,
+      "f1-score": 0.9379652605459057,
+      "support": 201.0
     },
     "beginner": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 1.0
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 343.0
     },
-    "accuracy": 0.0,
+    "expert": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 101.0
+    },
+    "intermediate": {
+      "precision": 0.9661016949152542,
+      "recall": 0.9633802816901409,
+      "f1-score": 0.9647390691114246,
+      "support": 355.0
+    },
+    "accuracy": 0.975,
     "macro avg": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 1.0
+      "precision": 0.9754363148179225,
+      "recall": 0.9759196972882068,
+      "f1-score": 0.9756760824143327,
+      "support": 1000.0
     },
     "weighted avg": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 1.0
+      "precision": 0.9750304581305588,
+      "recall": 0.975,
+      "f1-score": 0.9750133869042827,
+      "support": 1000.0
     }
   },
   "confusion_matrix": [
     [
+      189,
+      0,
+      0,
+      12
+    ],
+    [
+      0,
+      343,
       0,
       0
     ],
     [
-      1,
+      0,
+      0,
+      101,
       0
+    ],
+    [
+      13,
+      0,
+      0,
+      342
     ]
   ],
   "feature_importance": {
-    "level": 0.0,
-    "score": 0.0,
-    "hint_count": 0.0,
-    "challenges_completed": 0.0,
-    "success_rate": 0.0,
-    "avg_completion_time": 0.0,
-    "consecutive_successes": 0.0,
-    "consecutive_failures": 0.0,
-    "days_since_registration": 0.0,
-    "sql_injection_score": 0.0,
-    "xss_score": 0.0,
-    "command_injection_score": 0.0,
-    "authentication_score": 0.0,
-    "csrf_score": 0.0
+    "score": 0.2648229927922532,
+    "level": 0.16802041869813583,
+    "success_rate": 0.14590893060378174,
+    "challenges_completed": 0.1416435400892347,
+    "consecutive_successes": 0.08902362895194427,
+    "avg_completion_time": 0.07362162370568465,
+    "consecutive_failures": 0.031691630083455304,
+    "hint_count": 0.029002870897984832,
+    "command_injection_score": 0.01584967777999428,
+    "xss_score": 0.009927976997774677,
+    "sql_injection_score": 0.00980127141539024,
+    "csrf_score": 0.009344103490672306,
+    "authentication_score": 0.009123304429635885,
+    "days_since_registration": 0.002218030064058239
   }
 }

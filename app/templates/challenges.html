@@ -15,7 +15,7 @@
 </div>
 
 <!-- Challenge Categories Grid -->
-<div id="challenge-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <!-- SQL Injection -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
         <div class="bg-red-600 text-white p-4">
@@ -28,27 +28,31 @@
             <div>
                 <p class="text-gray-600 mb-4 text-sm">Learn to identify and exploit SQL injection vulnerabilities in
                     database-driven applications.</p>
-<div class="mb-4">
+                <div class="mb-4">
                     <div class="flex justify-between text-xs text-gray-600 mb-1">
                         <span>Progress</span>
-                        <span class="font-bold">{{ category_stats.sql_injection.percent }}%</span>
+                        <span>{{ category_stats.sql_injection.total }} challenges</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-red-600 h-2 rounded-full transition-all duration-500"
+                        <div class="bg-red-600 h-2 rounded-full"
                             style="width: {{ category_stats.sql_injection.percent }}%"></div>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <p class="text-xs text-gray-500">{{ category_stats.sql_injection.completed }}/{{ category_stats.sql_injection.total }} completed</p>
-                        {% if category_stats.sql_injection.percent == 100 %}
-                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
-                        {% endif %}
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ category_stats.sql_injection.completed }}/{{
+                        category_stats.sql_injection.total }} completed</p>
                 </div>
             </div>
+            {% if category_stats.sql_injection.percent == 100 %}
+            <div class="bg-green-100 border-2 border-green-500 text-green-800 py-3 px-4 rounded-lg text-center mt-4">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                <strong>Category Completed!</strong>
+                <p class="text-xs mt-1">You've mastered all SQL Injection challenges!</p>
+            </div>
+            {% else %}
             <button onclick="startChallengeCategory('sql_injection')"
                 class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
                 Start SQL Challenges
             </button>
+            {% endif %}
         </div>
     </div>
 
@@ -64,27 +68,31 @@
             <div>
                 <p class="text-gray-600 mb-4 text-sm">Master XSS attack techniques and learn how to prevent malicious
                     script injection.</p>
-<div class="mb-4">
+                <div class="mb-4">
                     <div class="flex justify-between text-xs text-gray-600 mb-1">
                         <span>Progress</span>
-                        <span class="font-bold">{{ category_stats.xss.percent }}%</span>
+                        <span>{{ category_stats.xss.total }} challenges</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-yellow-600 h-2 rounded-full transition-all duration-500"
-                            style="width: {{ category_stats.xss.percent }}%"></div>
+                        <div class="bg-yellow-600 h-2 rounded-full" style="width: {{ category_stats.xss.percent }}%">
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <p class="text-xs text-gray-500">{{ category_stats.xss.completed }}/{{ category_stats.xss.total }} completed</p>
-                        {% if category_stats.xss.percent == 100 %}
-                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
-                        {% endif %}
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ category_stats.xss.completed }}/{{ category_stats.xss.total
+                        }} completed</p>
                 </div>
             </div>
+            {% if category_stats.xss.percent == 100 %}
+            <div class="bg-green-100 border-2 border-green-500 text-green-800 py-3 px-4 rounded-lg text-center mt-4">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                <strong>Category Completed!</strong>
+                <p class="text-xs mt-1">You've mastered all XSS challenges!</p>
+            </div>
+            {% else %}
             <button onclick="startChallengeCategory('xss')"
                 class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
                 Start XSS Challenges
             </button>
+            {% endif %}
         </div>
     </div>
 
@@ -100,27 +108,31 @@
             <div>
                 <p class="text-gray-600 mb-4 text-sm">Explore OS command injection vulnerabilities and learn defense
                     strategies.</p>
-<div class="mb-4">
+                <div class="mb-4">
                     <div class="flex justify-between text-xs text-gray-600 mb-1">
                         <span>Progress</span>
-                        <span class="font-bold">{{ category_stats.command_injection.percent }}%</span>
+                        <span>{{ category_stats.command_injection.total }} challenges</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                        <div class="bg-purple-600 h-2 rounded-full"
                             style="width: {{ category_stats.command_injection.percent }}%"></div>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <p class="text-xs text-gray-500">{{ category_stats.command_injection.completed }}/{{ category_stats.command_injection.total }} completed</p>
-                        {% if category_stats.command_injection.percent == 100 %}
-                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
-                        {% endif %}
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ category_stats.command_injection.completed }}/{{
+                        category_stats.command_injection.total }} completed</p>
                 </div>
             </div>
+            {% if category_stats.command_injection.percent == 100 %}
+            <div class="bg-green-100 border-2 border-green-500 text-green-800 py-3 px-4 rounded-lg text-center mt-4">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                <strong>Category Completed!</strong>
+                <p class="text-xs mt-1">You've mastered all Command Injection challenges!</p>
+            </div>
+            {% else %}
             <button onclick="startChallengeCategory('command_injection')"
                 class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
                 Start Command Challenges
             </button>
+            {% endif %}
         </div>
     </div>
 
@@ -136,27 +148,31 @@
             <div>
                 <p class="text-gray-600 mb-4 text-sm">Practice authentication bypass techniques and learn secure
                     authentication methods.</p>
-<div class="mb-4">
+                <div class="mb-4">
                     <div class="flex justify-between text-xs text-gray-600 mb-1">
                         <span>Progress</span>
-                        <span class="font-bold">{{ category_stats.authentication.percent }}%</span>
+                        <span>{{ category_stats.authentication.total }} challenges</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                        <div class="bg-blue-600 h-2 rounded-full"
                             style="width: {{ category_stats.authentication.percent }}%"></div>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <p class="text-xs text-gray-500">{{ category_stats.authentication.completed }}/{{ category_stats.authentication.total }} completed</p>
-                        {% if category_stats.authentication.percent == 100 %}
-                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
-                        {% endif %}
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ category_stats.authentication.completed }}/{{
+                        category_stats.authentication.total }} completed</p>
                 </div>
             </div>
+            {% if category_stats.authentication.percent == 100 %}
+            <div class="bg-green-100 border-2 border-green-500 text-green-800 py-3 px-4 rounded-lg text-center mt-4">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                <strong>Category Completed!</strong>
+                <p class="text-xs mt-1">You've mastered all Authentication challenges!</p>
+            </div>
+            {% else %}
             <button onclick="startChallengeCategory('authentication')"
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
                 Start Auth Challenges
             </button>
+            {% endif %}
         </div>
     </div>
 
@@ -172,27 +188,31 @@
             <div>
                 <p class="text-gray-600 mb-4 text-sm">Understand Cross-Site Request Forgery attacks and protection
                     mechanisms.</p>
-<div class="mb-4">
+                <div class="mb-4">
                     <div class="flex justify-between text-xs text-gray-600 mb-1">
                         <span>Progress</span>
-                        <span class="font-bold">{{ category_stats.csrf.percent }}%</span>
+                        <span>{{ category_stats.csrf.total }} challenges</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-600 h-2 rounded-full transition-all duration-500"
-                            style="width: {{ category_stats.csrf.percent }}%"></div>
+                        <div class="bg-green-600 h-2 rounded-full" style="width: {{ category_stats.csrf.percent }}%">
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
-                        <p class="text-xs text-gray-500">{{ category_stats.csrf.completed }}/{{ category_stats.csrf.total }} completed</p>
-                        {% if category_stats.csrf.percent == 100 %}
-                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded">✓ Completed</span>
-                        {% endif %}
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ category_stats.csrf.completed }}/{{
+                        category_stats.csrf.total }} completed</p>
                 </div>
             </div>
+            {% if category_stats.csrf.percent == 100 %}
+            <div class="bg-green-100 border-2 border-green-500 text-green-800 py-3 px-4 rounded-lg text-center mt-4">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                <strong>Category Completed!</strong>
+                <p class="text-xs mt-1">You've mastered all CSRF challenges!</p>
+            </div>
+            {% else %}
             <button onclick="startChallengeCategory('csrf')"
                 class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors font-medium mt-4">
                 Start CSRF Challenges
             </button>
+            {% endif %}
         </div>
     </div>
 
@@ -605,51 +625,9 @@ null
 {% endif %}
 </script>
 
-<!-- Progress Stats Data -->
-<script type="application/json" id="progress-stats">
-{
-    "sql_injection": {{ category_stats.sql_injection | tojson }},
-    "xss": {{ category_stats.xss | tojson }},
-    "command_injection": {{ category_stats.command_injection | tojson }},
-    "authentication": {{ category_stats.authentication | tojson }},
-    "csrf": {{ category_stats.csrf | tojson }}
-}
-</script>
-
-<!-- Debug Progress Bars -->
-<script>
-    // Log progress bar data for debugging
-    document.addEventListener('DOMContentLoaded', function() {
-        const progressData = JSON.parse(document.getElementById('progress-stats').textContent);
-        
-        console.log('%c========== PROGRESS BAR DATA ==========', 'color: #4CAF50; font-weight: bold; font-size: 14px');
-        console.log('Loaded at:', new Date().toLocaleString());
-        console.log('');
-        
-        Object.keys(progressData).forEach(category => {
-            const data = progressData[category];
-            const emoji = data.percent === 100 ? '✅' : (data.percent >= 50 ? '⏳' : '📝');
-            console.log(`%c${emoji} ${category.toUpperCase().replace('_', ' ')}`, 'font-weight: bold');
-            console.log(`   Completed: ${data.completed}/${data.total}`);
-            console.log(`   Progress: ${data.percent}%`);
-            console.log('');
-        });
-        
-        console.log('%c========================================', 'color: #4CAF50; font-weight: bold');
-        
-        // Check for progress update flag
-        const progressUpdated = sessionStorage.getItem('progressUpdated');
-        if (progressUpdated === 'true') {
-            console.log('%c🔄 Progress bars refreshed after challenge completion', 'color: #2196F3; font-weight: bold');
-            sessionStorage.removeItem('progressUpdated');
-        }
-    });
-</script>
-
 <!-- Demo configuration -->
 <script src="{{ url_for('static', filename='js/demo-config.js') }}"></script>
 
 <!-- Challenge Handler v2.1 - Clean Implementation -->
-<script src="{{ url_for('static', filename='js/challenge-handler.js') }}?v=3.5"></script>
-<script src="{{ url_for('static', filename='js/challenge-fix.js') }}?v=3.6"></script>
+<script src="{{ url_for('static', filename='js/challenge-handler.js') }}?v=2.3"></script>
 {% endblock %}

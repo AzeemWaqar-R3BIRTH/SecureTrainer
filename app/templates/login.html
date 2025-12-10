@@ -203,26 +203,47 @@
 
         // Update scan status display
         updateScanStatus(message, type) {
-            // Update the main status message (outside modal)
+            // Update main status message (outside modal)
             const statusElement = document.getElementById('status-message');
             if (statusElement && message) {
                 statusElement.textContent = message;
                 statusElement.className = `status-message status-${type === 'scanning' ? 'info' : type}`;
                 statusElement.style.display = 'block';
             }
-
-            // ALSO update the camera modal status message (inside modal)
-            const cameraStatusElement = document.getElementById('camera-status-message');
-            if (cameraStatusElement && message) {
-                cameraStatusElement.textContent = message;
-                cameraStatusElement.className = `camera-status-message status-${type === 'scanning' ? 'info' : type}`;
-                cameraStatusElement.style.display = 'block';
-
+            
+            // ALSO update scan status inside camera modal
+            const scanStatusElement = document.getElementById('scan-status');
+            if (scanStatusElement && message) {
+                scanStatusElement.textContent = message;
+                
+                // Set background color based on type
+                if (type === 'error') {
+                    scanStatusElement.style.background = 'rgba(220, 38, 38, 0.9)'; // Red
+                } else if (type === 'success') {
+                    scanStatusElement.style.background = 'rgba(34, 197, 94, 0.9)'; // Green
+                } else if (type === 'scanning') {
+                    scanStatusElement.style.background = 'rgba(59, 130, 246, 0.9)'; // Blue
+                } else {
+                    scanStatusElement.style.background = 'rgba(0, 0, 0, 0.7)'; // Default dark
+                }
+                
+                scanStatusElement.style.display = 'block';
+                
                 // Auto-hide info messages after 3 seconds
-                if (type === 'info') {
+                if (type === 'info' || type === 'scanning') {
                     setTimeout(() => {
-                        cameraStatusElement.style.display = 'none';
+                        if (scanStatusElement.textContent === message) {
+                            scanStatusElement.style.display = 'none';
+                        }
                     }, 3000);
+                }
+                // Keep error and success messages visible longer (5 seconds)
+                else if (type === 'error' || type === 'success') {
+                    setTimeout(() => {
+                        if (scanStatusElement.textContent === message) {
+                            scanStatusElement.style.display = 'none';
+                        }
+                    }, 5000);
                 }
             }
 
@@ -248,60 +269,94 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
+        flex-direction: column;
     }
 
-    .login-container {
+    /* Top Navigation Bar */
+    .top-nav {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px 30px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .nav-logo i {
+        font-size: 1.8rem;
+    }
+
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .nav-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .nav-btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .nav-btn-primary:hover {
+        background: #5a6fd8;
+        transform: translateY(-1px);
+    }
+
+    .nav-btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+    }
+
+    .nav-btn-secondary:hover {
+        background: #e0e0e0;
+    }
+
+    .nav-btn-admin {
+        background: #ff6b6b;
+        color: white;
+    }
+
+    .nav-btn-admin:hover {
+        background: #ff5252;
+    }
+
+    /* Main Content Container */
+    .main-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .login-card {
         background: white;
         border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        width: 100%;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        padding: 40px;
         max-width: 900px;
-        min-height: 600px;
-        display: flex;
-    }
-
-    .login-left {
-        flex: 1;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 60px 40px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-    }
-
-    .login-right {
-        flex: 1;
-        padding: 60px 40px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .logo {
-        font-size: 3rem;
-        margin-bottom: 20px;
-    }
-
-    .welcome-text h1 {
-        font-size: 2.5rem;
-        margin-bottom: 20px;
-        font-weight: 700;
-    }
-
-    .welcome-text p {
-        font-size: 1.2rem;
-        opacity: 0.9;
-        line-height: 1.6;
-    }
-
-    .login-form {
         width: 100%;
     }
 
@@ -315,18 +370,23 @@
 
     .auth-methods {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         gap: 20px;
+        align-items: stretch;
     }
 
     .auth-method {
+        flex: 1;
         border: 2px solid #e0e0e0;
         border-radius: 15px;
-        padding: 30px;
+        padding: 30px 20px;
         text-align: center;
         transition: all 0.3s ease;
         cursor: pointer;
         position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .auth-method:hover {
@@ -559,8 +619,7 @@
 
     .qr-overlay {
         position: absolute;
-        top: 35%;
-        /* Moved up from 50% to be more centered in visible area */
+        top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         width: 200px;
@@ -655,21 +714,21 @@
     }
 
     @media (max-width: 768px) {
-        .login-container {
+        .nav-buttons {
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            font-size: 0.85rem;
+            padding: 8px 15px;
+        }
+
+        .login-card {
+            padding: 30px 20px;
+        }
+
+        .auth-methods {
             flex-direction: column;
-            max-width: 500px;
-        }
-
-        .login-left {
-            padding: 40px 30px;
-        }
-
-        .login-right {
-            padding: 40px 30px;
-        }
-
-        .welcome-text h1 {
-            font-size: 2rem;
         }
 
         .camera-modal-content {
@@ -681,45 +740,33 @@
             height: 300px;
         }
     }
-
-    .camera-status-message {
-        padding: 15px;
-        border-radius: 8px;
-        margin: 15px 0;
-        font-weight: 500;
-        text-align: center;
-        display: none;
-    }
-
-    .camera-status-message.status-success {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .camera-status-message.status-error {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .camera-status-message.status-info {
-        background: #d1ecf1;
-        color: #0c5460;
-        border: 1px solid #bee5eb;
-    }
 </style>
-<div class="login-container">
-    <div class="login-left">
-        <div class="logo">🛡️</div>
-        <div class="welcome-text">
-            <h1>SecureTrainer</h1>
-            <p>Welcome back! Use your QR code to securely access your cybersecurity training dashboard.</p>
-        </div>
-    </div>
 
-    <div class="login-right">
-        <div class="login-form">
+<!-- Top Navigation Bar -->
+<nav class="top-nav">
+    <div class="nav-logo">
+        <i class="fas fa-shield-alt"></i>
+        <span>SecureTrainer</span>
+    </div>
+    <div class="nav-buttons">
+        <a href="/register" class="nav-btn nav-btn-secondary">
+            <i class="fas fa-user-plus"></i> Register
+        </a>
+        <a href="/login" class="nav-btn nav-btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+        <a href="/admin/register" class="nav-btn nav-btn-admin">
+            <i class="fas fa-user-shield"></i> Admin Register
+        </a>
+        <a href="/admin/login" class="nav-btn nav-btn-admin">
+            <i class="fas fa-lock"></i> Admin Login
+        </a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+    <div class="login-card">
             <h2 class="form-title">Secure Login</h2>
 
             <div class="auth-methods">
@@ -749,8 +796,8 @@
                         </div>
                         <div class="upload-text">Click to upload QR code image</div>
                         <div class="upload-hint">or drag and drop your QR code here</div>
+                        <input type="file" id="qr-upload" accept="image/*" />
                     </div>
-                    <input type="file" id="qr-upload" accept="image/*" />
                 </div>
             </div>
 
@@ -762,50 +809,14 @@
                     <i class="fas fa-user-secret"></i> Demo Login
                 </button>
             </div>
-
-            <!-- Request New QR Code Section -->
-            <div style="margin-top: 20px; text-align: center; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                <div class="demo-text">QR code expired?</div>
-                <button class="btn btn-secondary" id="request-new-qr-btn">
-                    <i class="fas fa-sync-alt"></i> Request New QR Code
+            
+            <!-- Renew QR Code Section -->
+            <div class="demo-login" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <div class="demo-text">QR code expired or lost? Request a new one</div>
+                <button class="btn btn-primary" id="renew-qr-btn" style="background: #ff9800;">
+                    <i class="fas fa-sync-alt"></i> Renew QR Code
                 </button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- QR Renewal Modal -->
-<div id="qr-renewal-modal"
-    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); align-items: center; justify-content: center;">
-    <div class="camera-modal-content" style="max-width: 500px;">
-        <div class="camera-header">
-            <h3 class="camera-title">Request New QR Code</h3>
-            <button class="close-camera" id="close-renewal-modal">&times;</button>
-        </div>
-
-        <div style="padding: 20px;">
-            <p style="margin-bottom: 20px; color: #666;">
-                Enter your registered email address to receive a new QR code.
-            </p>
-
-            <form id="qr-renewal-form" onsubmit="submitQRRenewal(event)">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Email Address</label>
-                    <input type="email" id="renewal-email" required placeholder="your.email@example.com"
-                        style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
-                </div>
-
-                <div id="renewal-status-message" class="camera-status-message" style="display: none;"></div>
-
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" onclick="closeRenewalModal()" class="btn btn-secondary" style="flex: 1;">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">
-                        <i class="fas fa-paper-plane"></i> Send New QR Code
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -827,7 +838,7 @@
                 <div class="qr-corners bottom-right"></div>
             </div>
             <div id="scan-status"
-                style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; display: none;">
+                style="position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; display: none; text-align: center; min-width: 250px; max-width: 90%; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;">
                 Scanning...
             </div>
             <div class="camera-controls">
@@ -838,9 +849,6 @@
                     <i class="fas fa-stop"></i> Stop Camera
                 </button>
             </div>
-
-            <!-- Status message inside camera modal -->
-            <div id="camera-status-message" class="camera-status-message" style="display: none;"></div>
         </div>
     </div>
 </div>
@@ -917,12 +925,6 @@
             console.log('❌ Closing camera modal...');
             cameraModal.classList.remove('active');
             stopCamera();
-
-            // Clear camera status message
-            const cameraStatusElement = document.getElementById('camera-status-message');
-            if (cameraStatusElement) {
-                cameraStatusElement.style.display = 'none';
-            }
         }
 
         // Start camera
@@ -1116,7 +1118,63 @@
                 });
         }
 
+        // File upload click handler
+        if (fileUploadArea) {
+            console.log('✅ Adding click event listener to fileUploadArea');
+            fileUploadArea.addEventListener('click', function (e) {
+                console.log('📁 Upload area clicked');
+                if (qrUpload) {
+                    console.log('📁 Triggering file input click');
+                    qrUpload.click();
+                } else {
+                    console.error('❌ qrUpload element not found');
+                }
+            });
 
+            // Prevent default drag behavior
+            fileUploadArea.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileUploadArea.classList.add('dragover');
+                console.log('📁 Drag over detected');
+            });
+
+            fileUploadArea.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileUploadArea.classList.remove('dragover');
+                console.log('📁 Drag leave detected');
+            });
+
+            // Handle file drop
+            fileUploadArea.addEventListener('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileUploadArea.classList.remove('dragover');
+
+                console.log('📁 File dropped');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    console.log('📁 Processing dropped file:', files[0].name);
+                    handleFileUpload(files[0]);
+                }
+            });
+        } else {
+            console.error('❌ fileUploadArea not found, cannot add event listener');
+        }
+
+        // File input change handler
+        if (qrUpload) {
+            console.log('✅ Adding change event listener to qrUpload');
+            qrUpload.addEventListener('change', function (e) {
+                console.log('📁 File selected via input:', e.target.files[0]);
+                if (e.target.files[0]) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+        } else {
+            console.error('❌ qrUpload element not found');
+        }
 
 
 
@@ -1143,59 +1201,6 @@
                 });
         }
 
-        // Close QR renewal modal
-        function closeRenewalModal() {
-            const modal = document.getElementById('qr-renewal-modal');
-            const emailInput = document.getElementById('renewal-email');
-            const statusElement = document.getElementById('renewal-status-message');
-
-            modal.style.display = 'none';
-            emailInput.value = '';
-            statusElement.style.display = 'none';
-        }
-
-        // Submit QR renewal request
-        async function submitQRRenewal(event) {
-            event.preventDefault();
-
-            const email = document.getElementById('renewal-email').value;
-            const statusElement = document.getElementById('renewal-status-message');
-
-            // Show loading
-            statusElement.textContent = 'Sending request...';
-            statusElement.className = 'camera-status-message status-info';
-            statusElement.style.display = 'block';
-
-            try {
-                const response = await fetch('/api/auth/renew-qr', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email: email })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    statusElement.textContent = data.message || 'If this email is registered, a new QR code has been sent. Please check your inbox.';
-                    statusElement.className = 'camera-status-message status-success';
-
-                    // Close modal after 3 seconds
-                    setTimeout(() => {
-                        closeRenewalModal();
-                    }, 3000);
-                } else {
-                    statusElement.textContent = data.error || 'Failed to send QR code. Please try again.';
-                    statusElement.className = 'camera-status-message status-error';
-                }
-            } catch (error) {
-                console.error('QR renewal error:', error);
-                statusElement.textContent = 'Network error. Please check your connection and try again.';
-                statusElement.className = 'camera-status-message status-error';
-            }
-        }
-
         // Event listeners for ULTRA system
         console.log('🔧 ULTRA SYSTEM: Setting up event listeners...');
 
@@ -1209,62 +1214,6 @@
             });
         } else {
             console.error('❌ ULTRA SYSTEM: openCameraBtn not found');
-        }
-
-        if (fileUploadArea) {
-            console.log('✅ Adding click event listener to fileUploadArea');
-            fileUploadArea.addEventListener('click', function (e) {
-                console.log('📁 Upload area clicked');
-                e.preventDefault();
-                e.stopPropagation();
-                if (qrUpload) {
-                    console.log('📁 Triggering file input click');
-                    qrUpload.click();
-                } else {
-                    console.error('❌ qrUpload element not found');
-                }
-            });
-
-            // Also handle drag and drop events
-            fileUploadArea.addEventListener('dragover', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                fileUploadArea.classList.add('dragover');
-                console.log('📁 Drag over detected');
-            });
-
-            fileUploadArea.addEventListener('dragleave', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                fileUploadArea.classList.remove('dragover');
-                console.log('📁 Drag leave detected');
-            });
-
-            fileUploadArea.addEventListener('drop', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                fileUploadArea.classList.remove('dragover');
-                console.log('📁 File dropped');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    console.log('📁 Processing dropped file:', files[0].name);
-                    handleFileUpload(files[0]);
-                }
-            });
-        } else {
-            console.error('❌ fileUploadArea not found, cannot add event listener');
-        }
-
-        if (qrUpload) {
-            console.log('✅ Adding change event listener to qrUpload');
-            qrUpload.addEventListener('change', function (e) {
-                console.log('📁 File selected via input:', e.target.files[0]);
-                if (e.target.files[0]) {
-                    handleFileUpload(e.target.files[0]);
-                }
-            });
-        } else {
-            console.error('❌ qrUpload element not found');
         }
 
         if (closeCameraBtn) {
@@ -1298,6 +1247,52 @@
                 performDemoLogin();
             });
         }
+        
+        // Renew QR Code button handler
+        const renewQRBtn = document.getElementById('renew-qr-btn');
+        if (renewQRBtn) {
+            renewQRBtn.addEventListener('click', async function (e) {
+                console.log('🔄 Renew QR Code clicked');
+                e.preventDefault();
+                
+                // Prompt for email
+                const email = prompt('Enter your registered email address:');
+                if (!email || !email.trim()) {
+                    showStatus('Email address is required', 'error');
+                    return;
+                }
+                
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showStatus('Please enter a valid email address', 'error');
+                    return;
+                }
+                
+                showStatus('Generating new QR code...', 'info');
+                
+                try {
+                    const response = await fetch('/api/auth/renew-qr', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: email.trim() })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        showStatus('✅ New QR code sent to your email!', 'success');
+                    } else {
+                        showStatus(data.message || 'Failed to renew QR code', 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ Renew QR error:', error);
+                    showStatus('Network error. Please try again.', 'error');
+                }
+            });
+        }
 
         // Click outside modal to close
         if (cameraModal) {
@@ -1308,101 +1303,10 @@
             });
         }
 
-        // QR Renewal Modal Functions
-        const requestNewQRBtn = document.getElementById('request-new-qr-btn');
-        const qrRenewalModal = document.getElementById('qr-renewal-modal');
-        const closeRenewalBtn = document.getElementById('close-renewal-modal');
-
-        if (requestNewQRBtn) {
-            requestNewQRBtn.addEventListener('click', function () {
-                console.log('📧 Opening QR renewal modal');
-                qrRenewalModal.style.display = 'flex';
-            });
-        }
-
-        if (closeRenewalBtn) {
-            closeRenewalBtn.addEventListener('click', closeRenewalModal);
-        }
-
-        // Close modal when clicking outside
-        if (qrRenewalModal) {
-            qrRenewalModal.addEventListener('click', function (e) {
-                if (e.target === qrRenewalModal) {
-                    closeRenewalModal();
-                }
-            });
-        }
-
-
         console.log('✅ All event listeners attached');
         showStatus('Ready to scan QR code or upload image', 'info');
     });
 
     console.log('🎯 ULTRA QR Code Login System v3.0 initialized and ready!');
-</script>
-
-<!-- QR Renewal Functions (Global scope) -->
-<script>
-    // Close QR renewal modal
-    function closeRenewalModal() {
-        const modal = document.getElementById('qr-renewal-modal');
-        const emailInput = document.getElementById('renewal-email');
-        const statusElement = document.getElementById('renewal-status-message');
-
-        if (modal) modal.style.display = 'none';
-        if (emailInput) emailInput.value = '';
-        if (statusElement) statusElement.style.display = 'none';
-    }
-
-    // Submit QR renewal request
-    async function submitQRRenewal(event) {
-        event.preventDefault();
-
-        console.log('📧 QR Renewal: Form submitted');
-
-        const email = document.getElementById('renewal-email').value;
-        const statusElement = document.getElementById('renewal-status-message');
-
-        console.log('📧 QR Renewal: Email =', email);
-
-        // Show loading
-        statusElement.textContent = 'Sending request...';
-        statusElement.className = 'camera-status-message status-info';
-        statusElement.style.display = 'block';
-
-        try {
-            console.log('📧 QR Renewal: Sending POST request to /api/auth/renew-qr');
-
-            const response = await fetch('/api/auth/renew-qr', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email: email })
-            });
-
-            console.log('📧 QR Renewal: Response status =', response.status);
-
-            const data = await response.json();
-            console.log('📧 QR Renewal: Response data =', data);
-
-            if (response.ok) {
-                statusElement.textContent = data.message || 'If this email is registered, a new QR code has been sent. Please check your inbox.';
-                statusElement.className = 'camera-status-message status-success';
-
-                // Close modal after 3 seconds
-                setTimeout(() => {
-                    closeRenewalModal();
-                }, 3000);
-            } else {
-                statusElement.textContent = data.error || 'Failed to send QR code. Please try again.';
-                statusElement.className = 'camera-status-message status-error';
-            }
-        } catch (error) {
-            console.error('❌ QR renewal error:', error);
-            statusElement.textContent = 'Network error. Please check your connection and try again.';
-            statusElement.className = 'camera-status-message status-error';
-        }
-    }
 </script>
 {% endblock %}

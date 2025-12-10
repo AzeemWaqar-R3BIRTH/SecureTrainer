@@ -409,13 +409,17 @@ def update_user_learning_progress(user_id, module_id, section_id, completed=True
     try:
         from app.models.user_model import get_db
         db = get_db()
-        if not db:
+        if db is None:
+            print("[ERROR] Database connection failed")
             return False
             
         # Get current progress
         progress = get_user_learning_progress(user_id)
         if not progress:
+            print(f"[ERROR] Failed to get progress for user {user_id}")
             return False
+        
+        print(f"[INFO] Current progress before update: {progress.get('modules', {}).get(module_id, 'Not started')}")
             
         # Initialize module progress if not exists
         if module_id not in progress['modules']:
@@ -429,6 +433,10 @@ def update_user_learning_progress(user_id, module_id, section_id, completed=True
         # Update section completion
         if completed and section_id not in progress['modules'][module_id]['completed_sections']:
             progress['modules'][module_id]['completed_sections'].append(section_id)
+            print(f"[SUCCESS] Added {section_id} to completed sections")
+        elif not completed and section_id in progress['modules'][module_id]['completed_sections']:
+            progress['modules'][module_id]['completed_sections'].remove(section_id)
+            print(f"[INFO] Removed {section_id} from completed sections")
         
         # Calculate module progress
         total_sections = len(LEARNING_CONTENT.get(module_id, {}).get('sections', []))
@@ -436,6 +444,8 @@ def update_user_learning_progress(user_id, module_id, section_id, completed=True
         
         if total_sections > 0:
             progress['modules'][module_id]['progress_percentage'] = (completed_sections / total_sections) * 100
+        
+        print(f"[INFO] Module {module_id}: {completed_sections}/{total_sections} sections ({progress['modules'][module_id]['progress_percentage']:.1f}%)")
         
         # Update last accessed
         progress['modules'][module_id]['last_accessed'] = datetime.utcnow()
@@ -446,16 +456,22 @@ def update_user_learning_progress(user_id, module_id, section_id, completed=True
         overall_progress = sum(mod['progress_percentage'] for mod in progress['modules'].values()) / total_modules
         progress['overall_progress'] = overall_progress
         
+        print(f"[INFO] Overall progress: {overall_progress:.1f}%")
+        
         # Update in database
-        db.learning_progress.update_one(
+        result = db.learning_progress.update_one(
             {'user_id': user_id},
             {'$set': progress}
         )
         
+        print(f"[INFO] Database update: matched={result.matched_count}, modified={result.modified_count}")
+        
         return True
         
     except Exception as e:
-        print(f"Error updating learning progress: {e}")
+        print(f"[ERROR] Error updating learning progress: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 @learning_bp.route('/content/<module_id>', methods=['GET'])
@@ -515,33 +531,15 @@ def get_learning_content(module_id):
         # Get module content
         content = LEARNING_CONTENT[module_id].copy()
         
-        # Get user's progress for this specific module (new system)
-        from app.models.user_model import get_db
-        db = get_db()
-        
-        module_progress_doc = db.learning_progress.find_one({
-            'user_id': user_id,
-            'module_id': module_id
-        })
-        
-        if module_progress_doc:
-            # Use the new progress document structure
-            content['user_progress'] = {
-                'is_complete': module_progress_doc.get('is_complete', False),
-                'manually_completed': module_progress_doc.get('manually_completed', False),
-                'scroll_percentage': module_progress_doc.get('scroll_percentage', 0),
-                'time_spent': module_progress_doc.get('time_spent', 0),
-                'sections_visited': module_progress_doc.get('sections_visited', []),
-                'criteria_met': module_progress_doc.get('criteria_met', {})
-            }
+        # Get user's progress for this module
+        progress = get_user_learning_progress(user_id)
+        if progress and module_id in progress['modules']:
+            content['user_progress'] = progress['modules'][module_id]
         else:
             content['user_progress'] = {
-                'is_complete': False,
-                'manually_completed': False,
-                'scroll_percentage': 0,
-                'time_spent': 0,
-                'sections_visited': [],
-                'criteria_met': {}
+                'completed_sections': [],
+                'progress_percentage': 0,
+                'time_spent': 0
             }
         
         # Record activity
@@ -593,85 +591,34 @@ def get_learning_progress():
             }), 401
         
         user_id = session['user_id']
+        progress = get_user_learning_progress(user_id)
         
-        # Get database connection
-        from app.models.user_model import get_db
-        db = get_db()
+        if not progress:
+            return jsonify({
+                'success': False,
+                'error': 'Progress data not found'
+            }), 404
         
-        # Get all module progress documents for this user (new system)
-        module_progress_docs = list(db.learning_progress.find({'user_id': user_id}))
-        
-        # Build progress data structure
+        # Format progress data for frontend
         formatted_progress = {
             'overall': {
-                'percentage': 0,
-                'total_study_time': 0
+                'percentage': round(progress.get('overall_progress', 0), 1),
+                'total_study_time': progress.get('total_study_time', 0)
             },
             'modules': {}
         }
         
-        total_modules = len(LEARNING_CONTENT)
-        completed_modules = 0
-        total_progress = 0
-        
         # Add module-specific progress
         for module_id, module_data in LEARNING_CONTENT.items():
-            # Find progress document for this module
-            module_doc = next((doc for doc in module_progress_docs if doc.get('module_id') == module_id), None)
-            
-            if module_doc:
-                is_complete = module_doc.get('is_complete', False)
-                manually_completed = module_doc.get('manually_completed', False)
-                
-                # ONLY show 100% if user manually marked it complete via checkbox
-                # Otherwise calculate progress based on criteria met
-                if is_complete and manually_completed:
-                    # User clicked the checkbox - show 100% complete
-                    percentage = 100
-                    completed_modules += 1
-                else:
-                    # Calculate percentage based on criteria met (automatic tracking)
-                    # This gives partial progress but NOT 100% without checkbox
-                    criteria_met = module_doc.get('criteria_met', {})
-                    met_count = sum(1 for v in criteria_met.values() if v)
-                    total_criteria = len(criteria_met) if criteria_met else 4
-                    
-                    if total_criteria > 0:
-                        # Cap automatic progress at 95% - user must click checkbox for 100%
-                        auto_percentage = (met_count / total_criteria * 100)
-                        percentage = min(95, auto_percentage)
-                    else:
-                        percentage = 0
-                
-                total_progress += percentage
-                
-                formatted_progress['modules'][module_id] = {
-                    'title': module_data['title'],
-                    'percentage': round(percentage, 1),
-                    'completed_sections': len(module_doc.get('sections_visited', [])),
-                    'total_sections': len(module_data['sections']),
-                    'time_spent': module_doc.get('time_spent', 0),
-                    'last_accessed': module_doc.get('last_updated'),
-                    'is_complete': is_complete and manually_completed  # Only true if checkbox clicked
-                }
-                
-                # Add to total study time
-                formatted_progress['overall']['total_study_time'] += module_doc.get('time_spent', 0)
-            else:
-                # No progress yet for this module
-                formatted_progress['modules'][module_id] = {
-                    'title': module_data['title'],
-                    'percentage': 0,
-                    'completed_sections': 0,
-                    'total_sections': len(module_data['sections']),
-                    'time_spent': 0,
-                    'last_accessed': None,
-                    'is_complete': False
-                }
-        
-        # Calculate overall progress
-        if total_modules > 0:
-            formatted_progress['overall']['percentage'] = round(total_progress / total_modules, 1)
+            module_progress = progress['modules'].get(module_id, {})
+            formatted_progress['modules'][module_id] = {
+                'title': module_data['title'],
+                'percentage': round(module_progress.get('progress_percentage', 0), 1),
+                'completed_sections': len(module_progress.get('completed_sections', [])),
+                'total_sections': len(module_data['sections']),
+                'time_spent': module_progress.get('time_spent', 0),
+                'last_accessed': module_progress.get('last_accessed')
+            }
         
         return jsonify({
             'success': True,
@@ -679,9 +626,7 @@ def get_learning_progress():
         })
         
     except Exception as e:
-        logger.error(f"Error getting learning progress: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error getting learning progress: {e}")
         return jsonify({
             'success': False,
             'error': 'Failed to load progress'
@@ -699,6 +644,9 @@ def update_section_progress(module_id, section_id):
         
         user_id = session['user_id']
         data = request.get_json() or {}
+        
+        print(f"[UPDATE] Updating section progress: module={module_id}, section={section_id}, user={user_id}")
+        print(f"[DATA] Request data: {data}")
         
         # Validate module and section
         if module_id not in LEARNING_CONTENT:
@@ -723,6 +671,7 @@ def update_section_progress(module_id, section_id):
         success = update_user_learning_progress(user_id, module_id, section_id, completed)
         
         if success:
+            print(f"[SUCCESS] Progress updated successfully for {module_id}/{section_id}")
             # Record activity
             record_user_activity(user_id, f'learning_section_completed_{module_id}_{section_id}')
             
@@ -731,13 +680,16 @@ def update_section_progress(module_id, section_id):
                 'message': 'Progress updated successfully'
             })
         else:
+            print(f"[ERROR] Failed to update progress for {module_id}/{section_id}")
             return jsonify({
                 'success': False,
                 'error': 'Failed to update progress'
             }), 500
             
     except Exception as e:
-        print(f"Error updating section progress: {e}")
+        print(f"[ERROR] Error updating section progress: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': 'Failed to update progress'
@@ -930,195 +882,57 @@ def get_certificates():
             'error': 'Failed to get certificates'
         }), 500
 
-@learning_bp.route('/progress/<module_id>', methods=['POST'])
-def track_module_progress(module_id):
-    """Track detailed user progress through a learning module"""
+@learning_bp.route('/clear-cache', methods=['POST'])
+def clear_learning_cache():
+    """Clear the server-side enhanced learning cache for a specific module or all modules."""
     try:
         if 'user_id' not in session:
-            return jsonify({'error': 'Not authenticated'}), 401
-        
-        user_id = session['user_id']
-        data = request.json
-        
-        scroll_percentage = data.get('scroll_percentage', 0)
-        time_spent = data.get('time_spent', 0)
-        sections_visited = data.get('sections_visited', [])
-        videos_watched = data.get('videos_watched', {})
-        
-        module = LEARNING_CONTENT.get(module_id)
-        if not module:
-            return jsonify({'error': 'Module not found'}), 404
-        
-        estimated_time = module.get('estimated_time', 30) * 60
-        min_time_required = estimated_time * 0.7
-        
-        criteria_met = {
-            'scroll_depth': scroll_percentage >= 90,
-            'time_spent': time_spent >= min_time_required,
-            'sections_visited': len(sections_visited) >= len(module.get('sections', [])),
-            'videos_watched': all(pct >= 50 for pct in videos_watched.values()) if videos_watched else True
-        }
-        
-        is_complete = all(criteria_met.values())
-        
-        from app.models.user_model import get_db
-        db = get_db()
-        
-        progress_data = {
-            'user_id': user_id,
-            'module_id': module_id,
-            'scroll_percentage': scroll_percentage,
-            'time_spent': time_spent,
-            'sections_visited': sections_visited,
-            'videos_watched': videos_watched,
-            'criteria_met': criteria_met,
-            'is_complete': is_complete,
-            'last_updated': datetime.now()
-        }
-        
-        db.learning_progress.update_one(
-            {'user_id': user_id, 'module_id': module_id},
-            {'$set': progress_data},
-            upsert=True
-        )
-        
-        total_criteria = len(criteria_met)
-        met_criteria = sum(1 for met in criteria_met.values() if met)
-        progress_percentage = int((met_criteria / total_criteria) * 100)
-        
-        return jsonify({
-            'success': True,
-            'is_complete': is_complete,
-            'criteria_met': criteria_met,
-            'progress_percentage': progress_percentage,
-            'time_remaining': max(0, min_time_required - time_spent)
-        })
-        
-    except Exception as e:
-        logger.error(f'Error tracking module progress: {e}')
-        return jsonify({'error': 'Failed to track progress'}), 500
-
-@learning_bp.route('/progress/<module_id>', methods=['GET'])
-def get_module_progress(module_id):
-    """Get user's progress for a specific module"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({'error': 'Not authenticated'}), 401
-        
-        user_id = session['user_id']
-        
-        from app.models.user_model import get_db
-        db = get_db()
-        
-        progress = db.learning_progress.find_one({
-            'user_id': user_id,
-            'module_id': module_id
-        })
-        
-        if not progress:
-            module = LEARNING_CONTENT.get(module_id, {})
             return jsonify({
-                'module_id': module_id,
-                'is_complete': False,
-                'scroll_percentage': 0,
-                'time_spent': 0,
-                'sections_visited': [],
-                'videos_watched': {},
-                'criteria_met': {
-                    'scroll_depth': False,
-                    'time_spent': False,
-                    'sections_visited': False,
-                    'videos_watched': True
-                },
-                'progress_percentage': 0,
-                'estimated_time': module.get('estimated_time', 30) * 60
+                'success': False,
+                'error': 'Authentication required'
+            }), 401
+        
+        data = request.get_json() or {}
+        module_id = data.get('module_id')
+        
+        # Import enhanced learning system
+        try:
+            from app.utils.enhanced_learning_system import learning_content_manager
+            
+            if module_id:
+                # Clear specific module from cache
+                with learning_content_manager.cache_lock:
+                    if module_id in learning_content_manager.content_cache:
+                        del learning_content_manager.content_cache[module_id]
+                        print(f"[INFO] Cleared cache for module: {module_id}")
+                
+                return jsonify({
+                    'success': True,
+                    'message': f'Cache cleared for module {module_id}'
+                })
+            else:
+                # Clear all cache
+                learning_content_manager.clear_cache()
+                print("[INFO] Cleared all learning content cache")
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'All cache cleared'
+                })
+        
+        except ImportError:
+            # Enhanced system not available, just return success
+            return jsonify({
+                'success': True,
+                'message': 'Enhanced learning system not active, no cache to clear'
             })
         
-        progress['_id'] = str(progress['_id'])
-        module = LEARNING_CONTENT.get(module_id, {})
-        progress['estimated_time'] = module.get('estimated_time', 30) * 60
-        
-        return jsonify(progress)
-        
     except Exception as e:
-        logger.error(f'Error getting module progress: {e}')
-        return jsonify({'error': 'Failed to get progress'}), 500
-
-
-@learning_bp.route('/module/<module_id>/complete', methods=['POST'])
-def mark_module_complete(module_id):
-    """Mark a module as complete or incomplete"""
-    try:
-        if 'user_id' not in session:
-            return jsonify({'error': 'Not authenticated'}), 401
-        
-        user_id = session['user_id']
-        data = request.json
-        completed = data.get('completed', True)
-        
-        # Validate module exists
-        if module_id not in LEARNING_CONTENT:
-            return jsonify({'error': 'Module not found'}), 404
-        
-        from app.models.user_model import get_db
-        db = get_db()
-        
-        # Update or create progress record
-        if completed:
-            # Mark as 100% complete
-            progress_data = {
-                'user_id': user_id,
-                'module_id': module_id,
-                'scroll_percentage': 100,
-                'time_spent': LEARNING_CONTENT[module_id].get('estimated_time', 30) * 60,
-                'sections_visited': [s['id'] for s in LEARNING_CONTENT[module_id].get('sections', [])],
-                'videos_watched': {},
-                'criteria_met': {
-                    'scroll_depth': True,
-                    'time_spent': True,
-                    'sections_visited': True,
-                    'videos_watched': True
-                },
-                'is_complete': True,
-                'manually_completed': True,
-                'last_updated': datetime.now()
-            }
-        else:
-            # Mark as incomplete
-            progress_data = {
-                'user_id': user_id,
-                'module_id': module_id,
-                'scroll_percentage': 0,
-                'time_spent': 0,
-                'sections_visited': [],
-                'videos_watched': {},
-                'criteria_met': {
-                    'scroll_depth': False,
-                    'time_spent': False,
-                    'sections_visited': False,
-                    'videos_watched': False
-                },
-                'is_complete': False,
-                'manually_completed': False,
-                'last_updated': datetime.now()
-            }
-        
-        db.learning_progress.update_one(
-            {'user_id': user_id, 'module_id': module_id},
-            {'$set': progress_data},
-            upsert=True
-        )
-        
+        print(f"[ERROR] Error clearing cache: {e}")
         return jsonify({
-            'success': True,
-            'message': f'Module marked as {"complete" if completed else "incomplete"}',
-            'is_complete': completed
-        })
-        
-    except Exception as e:
-        logger.error(f'Error marking module complete: {e}')
-        return jsonify({'error': 'Failed to update completion status'}), 500
-
+            'success': False,
+            'error': 'Failed to clear cache'
+        }), 500
 
 # Error handlers
 @learning_bp.errorhandler(404)

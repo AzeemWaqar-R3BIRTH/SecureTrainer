@@ -498,9 +498,22 @@ def initialize_error_handling(app: Flask):
     # Add context processors for templates
     @app.context_processor
     def inject_system_status():
+        from flask import session
+        from app.models.user_model import get_user_by_id
+        
+        # Get current user from session
+        user = None
+        user_id = session.get('user_id')
+        if user_id:
+            try:
+                user = get_user_by_id(user_id)
+            except:
+                pass
+        
         return {
             'system_status': degradation_manager.get_status() if degradation_manager else {'overall_health': 'unknown'},
-            'degraded_features': degradation_manager.degraded_features if degradation_manager else set()
+            'degraded_features': degradation_manager.degraded_features if degradation_manager else set(),
+            'user': user  # Make user available in all templates
         }
     
     logger.info("✅ Error handling framework initialized")

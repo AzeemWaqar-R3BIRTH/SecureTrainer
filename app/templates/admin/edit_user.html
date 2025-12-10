@@ -8,7 +8,7 @@
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
-            <p class="text-gray-600">Update details for {{ user.get('first_name', 'Unknown') }} {{ user.get('last_name', 'User') }}</p>
+            <p class="text-gray-600">Update details for {{ user.first_name }} {{ user.last_name }}</p>
         </div>
         <a href="{{ url_for('admin.manage_users') }}"
             class="text-gray-600 hover:text-gray-800 flex items-center transition">
@@ -18,7 +18,7 @@
 
     <!-- Edit Form -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.get('_id', user.get('id', ''))) }}" class="p-6 space-y-6"
+        <form method="POST" action="{{ url_for('admin.edit_user', user_id=user._id) }}" class="p-6 space-y-6"
             data-validate>
             {% if csrf_token is defined and csrf_token %}
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -30,22 +30,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                        <input type="text" id="first_name" name="first_name" value="{{ user.get('first_name', '') }}" required
+                        <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                        <input type="text" id="last_name" name="last_name" value="{{ user.get('last_name', '') }}" required
+                        <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" id="email" name="email" value="{{ user.get('email', '') }}" required
+                        <input type="email" id="email" name="email" value="{{ user.email }}" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                        <input type="text" id="username" name="username" value="{{ user.get('username', '') }}" readonly
+                        <input type="text" id="username" name="username" value="{{ user.username }}" readonly
                             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed">
                         <p class="text-xs text-gray-500 mt-1">Username cannot be changed</p>
                     </div>
@@ -58,24 +58,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="company" class="block text-sm font-medium text-gray-700 mb-1">Company</label>
-                        <input type="text" id="company" name="company" value="{{ user.get('company', '') }}"
+                        <input type="text" id="company" name="company" value="{{ user.company }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
                         <select id="department" name="department"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="IT" {% if user.get('department')=='IT' %}selected{% endif %}>IT</option>
-                            <option value="HR" {% if user.get('department')=='HR' %}selected{% endif %}>HR</option>
-                            <option value="Finance" {% if user.get('department')=='Finance' %}selected{% endif %}>Finance
+                            <option value="IT" {% if user.department=='IT' %}selected{% endif %}>IT</option>
+                            <option value="HR" {% if user.department=='HR' %}selected{% endif %}>HR</option>
+                            <option value="Finance" {% if user.department=='Finance' %}selected{% endif %}>Finance
                             </option>
-                            <option value="Sales" {% if user.get('department')=='Sales' %}selected{% endif %}>Sales</option>
-                            <option value="Engineering" {% if user.get('department')=='Engineering' %}selected{% endif %}>
+                            <option value="Sales" {% if user.department=='Sales' %}selected{% endif %}>Sales</option>
+                            <option value="Engineering" {% if user.department=='Engineering' %}selected{% endif %}>
                                 Engineering</option>
-                            <option value="Marketing" {% if user.get('department')=='Marketing' %}selected{% endif %}>Marketing
+                            <option value="Marketing" {% if user.department=='Marketing' %}selected{% endif %}>Marketing
                             </option>
-                            <option value="Legal" {% if user.get('department')=='Legal' %}selected{% endif %}>Legal</option>
-                            <option value="Operations" {% if user.get('department')=='Operations' %}selected{% endif %}>
+                            <option value="Legal" {% if user.department=='Legal' %}selected{% endif %}>Legal</option>
+                            <option value="Operations" {% if user.department=='Operations' %}selected{% endif %}>
                                 Operations</option>
                         </select>
                     </div>
@@ -90,30 +90,30 @@
                         <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
                         <select id="role" name="role"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="Trainee" {% if user.get('role')=='Trainee' %}selected{% endif %}>Trainee</option>
-                            <option value="Junior Analyst" {% if user.get('role')=='Junior Analyst' %}selected{% endif %}>
+                            <option value="Trainee" {% if user.role=='Trainee' %}selected{% endif %}>Trainee</option>
+                            <option value="Junior Analyst" {% if user.role=='Junior Analyst' %}selected{% endif %}>
                                 Junior Analyst</option>
-                            <option value="Analyst" {% if user.get('role')=='Analyst' %}selected{% endif %}>Analyst</option>
-                            <option value="Senior Analyst" {% if user.get('role')=='Senior Analyst' %}selected{% endif %}>
+                            <option value="Analyst" {% if user.role=='Analyst' %}selected{% endif %}>Analyst</option>
+                            <option value="Senior Analyst" {% if user.role=='Senior Analyst' %}selected{% endif %}>
                                 Senior Analyst</option>
-                            <option value="Specialist" {% if user.get('role')=='Specialist' %}selected{% endif %}>Specialist
+                            <option value="Specialist" {% if user.role=='Specialist' %}selected{% endif %}>Specialist
                             </option>
-                            <option value="Expert" {% if user.get('role')=='Expert' %}selected{% endif %}>Expert</option>
-                            <option value="Lead Analyst" {% if user.get('role')=='Lead Analyst' %}selected{% endif %}>Lead
+                            <option value="Expert" {% if user.role=='Expert' %}selected{% endif %}>Expert</option>
+                            <option value="Lead Analyst" {% if user.role=='Lead Analyst' %}selected{% endif %}>Lead
                                 Analyst</option>
-                            <option value="Team Lead" {% if user.get('role')=='Team Lead' %}selected{% endif %}>Team Lead
+                            <option value="Team Lead" {% if user.role=='Team Lead' %}selected{% endif %}>Team Lead
                             </option>
-                            <option value="Department Head" {% if user.get('role')=='Department Head' %}selected{% endif %}>
+                            <option value="Department Head" {% if user.role=='Department Head' %}selected{% endif %}>
                                 Department Head</option>
-                            <option value="Security Architect" {% if user.get('role')=='Security Architect' %}selected{% endif
+                            <option value="Security Architect" {% if user.role=='Security Architect' %}selected{% endif
                                 %}>Security Architect</option>
-                            <option value="Chief Security Officer" {% if user.get('role')=='Chief Security Officer'
+                            <option value="Chief Security Officer" {% if user.role=='Chief Security Officer'
                                 %}selected{% endif %}>Chief Security Officer</option>
                         </select>
                     </div>
                     <div>
                         <div class="flex items-center h-full pt-6">
-                            <input type="checkbox" id="is_admin" name="is_admin" {% if user.get('is_admin', False) %}checked{% endif
+                            <input type="checkbox" id="is_admin" name="is_admin" {% if user.is_admin %}checked{% endif
                                 %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <label for="is_admin" class="ml-2 block text-sm text-gray-900">
                                 Grant Admin Privileges
@@ -122,12 +122,12 @@
                     </div>
                     <div>
                         <label for="score" class="block text-sm font-medium text-gray-700 mb-1">Score</label>
-                        <input type="number" id="score" name="score" value="{{ user.get('score', 0) }}" required
+                        <input type="number" id="score" name="score" value="{{ user.score }}" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
-                        <input type="number" id="level" name="level" value="{{ user.get('level', 1) }}" required
+                        <input type="number" id="level" name="level" value="{{ user.level }}" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
