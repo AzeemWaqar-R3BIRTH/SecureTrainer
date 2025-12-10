@@ -78,46 +78,36 @@ def get_user_by_id(user_id):
     return None
 
 
-def get_user_by_email(email):
-    """Get a user by email address."""
-    db = get_db()
-    try:
-        user = db.users.find_one({'email': email})
-        return user
-    except Exception as e:
-        print(f"Error finding user by email: {e}")
-        return None
-
-
-def update_user_score_level(user_id, score_delta=0):
-    """Update user level and role based on their CURRENT score.
-    
-    NOTE: This function does NOT add score_delta to the user's score.
-    It only recalculates and updates the level and role based on the current score.
-    The score_delta parameter is kept for backwards compatibility but is ignored.
-    
-    Use update_user_challenge_progress() in challenge_model.py to update scores.
-    """
+def update_user_score_level(user_id, score_delta):
     db = get_db()
     user = get_user_by_id(user_id)
     if not user:
         return
 
-    # Get CURRENT score from database (don't add score_delta)
-    current_score = user.get('score', 0)
-    
-    # Calculate level and role based on current score
-    new_level = calculate_user_level(current_score)
-    new_role = get_role_for_level(new_level)
+    new_score = user.get('score', 0) + score_delta
+    new_level = 1 + new_score // 1000
+
+    role_map = {
+        1: "Trainee",
+        2: "Junior Analyst",
+        4: "Analyst",
+        6: "Senior Analyst",
+        8: "Lead",
+        10: "Department Head"
+    }
+
+    new_role = "Trainee"
+    for level, role in sorted(role_map.items()):
+        if new_level >= level:
+            new_role = role
 
     try:
         db.users.update_one(
-            {'_id': user['_id']},
-            {'$set': {'level': new_level, 'role': new_role}}
+            {'_id': user['_id']},  # Use the _id from the found user
+            {'$set': {'score': new_score, 'level': new_level, 'role': new_role}}
         )
-        print(f"Updated user {user_id} level to {new_level} and role to {new_role} (score: {current_score})")
     except Exception as e:
-        print(f"Error updating user level: {str(e)}")
+        print(f"Error updating user score: {str(e)}")
 
 
 def get_top_users(limit=5, department=None):
@@ -129,17 +119,9 @@ def get_top_users(limit=5, department=None):
 
     result = []
     for u in users:
-        # Use username if first_name/last_name not available
-        first_name = u.get('first_name', '')
-        last_name = u.get('last_name', '')
-        if first_name and last_name:
-            name = f"{first_name} {last_name}"
-        else:
-            name = u.get('username', 'Unknown User')
-        
         result.append({
             'user_id': str(u['_id']),  # Include user_id in results
-            'name': name,
+            'name': f"{u['first_name']} {u['last_name']}",
             'score': u.get('score', 0),
             'level': u.get('level', 1),
             'role': u.get('role', 'Trainee'),
@@ -207,54 +189,18 @@ def get_level_requirements(level):
     return int(100 * (1.5 ** (level - 2)))
 
 
-def update_performance_metrics(user_id, challenge_data, success=False):
-    """
-    Update user performance metrics after a challenge attempt.
-    """
-    try:
-        db = get_db()
-        if not challenge_data:
-            return
-
-        # Simple metrics update logic - can be expanded
-        pass
-        
-    except Exception as e:
-        print(f"Error updating performance metrics: {e}")
-
-
-def update_user_comprehensive(user_id, score_delta=0, challenge_data=None, update_score=False):
-    """Comprehensive user update with advanced metrics.
-    
-    Args:
-        user_id: The user's ID
-        score_delta: Points to add (only used if update_score=True)
-        challenge_data: Optional challenge metadata
-        update_score: If True, adds score_delta to user's score. If False, only updates metadata.
-                     Default is False to prevent duplicate scoring.
-    
-    NOTE: For challenge completion, use update_user_challenge_progress() in challenge_model.py
-          which is the single source of truth for scoring.
-    """
+def update_user_comprehensive(user_id, score_delta, challenge_data=None):
+    """Comprehensive user update with advanced metrics."""
     db = get_db()
     user = get_user_by_id(user_id)
     
     if not user:
         return False
     
-    # Get current score
-    current_score = user.get('score', 0)
-    
-    # Only update score if explicitly requested
-    if update_score and score_delta > 0:
-        new_score = current_score + score_delta
-        new_level = calculate_user_level(new_score)
-        new_role = get_role_for_level(new_level)
-    else:
-        # Just recalculate level/role based on current score
-        new_score = current_score
-        new_level = calculate_user_level(current_score)
-        new_role = get_role_for_level(new_level)
+    # Calculate new scores and levels
+    new_score = user.get('score', 0) + score_delta
+    new_level = calculate_user_level(new_score)
+    new_role = get_role_for_level(new_level)
     
     # Update basic fields
     update_data = {
@@ -264,16 +210,13 @@ def update_user_comprehensive(user_id, score_delta=0, challenge_data=None, updat
         'last_activity': datetime.now()
     }
     
-    # Update category-specific scores if challenge data provided AND score update requested
-    if challenge_data and update_score and score_delta > 0:
+    # Update category-specific scores if challenge data provided
+    if challenge_data and score_delta > 0:
         category = challenge_data.get('category', '').lower().replace(' ', '_')
         if category:
             category_score_field = f"{category}_score"
             current_category_score = user.get(category_score_field, 0)
             update_data[category_score_field] = current_category_score + score_delta
-    
-    # Update performance metrics
-    update_performance_metrics(user_id, challenge_data, score_delta > 0 if update_score else False)
     
     # Apply updates
     try:
@@ -282,17 +225,9 @@ def update_user_comprehensive(user_id, score_delta=0, challenge_data=None, updat
             {'$set': update_data}
         )
         
-        # Check for achievements only if score was updated
-        if update_score and score_delta > 0:
-            # Note: check_and_award_achievements expects to be imported or available.
-            # If not available, we might want to wrap this in try/except or comment out if it calls undefined function.
-            # Assuming check_and_award_achievements is NOT defined in this file (based on previous view), likely referenced from elsewhere or missing.
-            # However, code analysis showed it was used. I'll wrap it safely.
-            try:
-                from app.models.gamification import check_and_award_achievements
-                check_and_award_achievements(user_id, new_score, new_level)
-            except ImportError:
-                pass
+        # Check for achievements (DISABLED - function not implemented)
+        # TODO: Implement check_and_award_achievements function
+        # check_and_award_achievements(user_id, new_score, new_level)
         
         return True
     except Exception as e:
@@ -378,7 +313,6 @@ def get_user_dashboard_data(user_id):
     current_level = user.get('level', 1)
     current_score = user.get('score', 0)
     
-    # Use the shared level requirements formula instead of hardcoded 1000/level
     level_base_score = get_level_requirements(current_level)
     next_level_score = get_level_requirements(current_level + 1)
     
