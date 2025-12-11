@@ -1,15 +1,9 @@
 services:
   - type: web
     name: securetrainer
-    env: python
+    env: docker
     plan: free
-    buildCommand: bash build.sh
-    startCommand: gunicorn securetrainer:app
-    # Install system-level dependencies
-    buildFilter:
-      paths:
-        - requirements.txt
-        - build.sh
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
