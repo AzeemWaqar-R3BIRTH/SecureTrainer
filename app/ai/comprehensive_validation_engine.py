@@ -565,12 +565,16 @@ class ComprehensiveValidationEngine:
                 "mutation-based XSS"
             ],
             'xss_10': [
-                "content security policy",
-                "CSP",
-                "XSS prevention",
-                "CSP headers",
-                "nonce-based CSP",
-                "strict CSP"
+                "CSS injection",
+                "url() function",
+                "javascript: protocol",
+                "CSS url javascript",
+                "executes JavaScript through CSS",
+                "style attribute injection",
+                "background url javascript",
+                "CSS url() accepts javascript protocol",
+                "style injection with javascript",
+                "exploits CSS url() function"
             ],
             
             # Command Injection Challenges - EXACTLY from demo guide
@@ -942,6 +946,9 @@ class ComprehensiveValidationEngine:
             r'^test$',
             r'^testing$',
             r'^random$',
+            r'^incorrect$',  # Reject literal "incorrect"
+            r'^wrong$',  # Reject literal "wrong"
+            r'^false$',  # Reject literal "false"
             r'^asdf+$',
             r'^qwer+ty+$',
             r'^123+$',
@@ -1095,7 +1102,14 @@ class ComprehensiveValidationEngine:
         xss_concepts = {
             'xss_1': ['javascript', 'execute', 'alert', 'script'],
             'xss_2': ['event', 'handler', 'onerror', 'image'],
-            'xss_3': ['svg', 'onload', 'filter', 'bypass']
+            'xss_3': ['svg', 'onload', 'filter', 'bypass'],
+            'xss_4': ['dom', 'manipulation', 'innerhtml', 'injection'],
+            'xss_5': ['context', 'escape', 'attribute', 'injection'],
+            'xss_6': ['template', 'injection', 'angular', 'expression'],
+            'xss_7': ['mutation', 'parser', 'browser', 'parsing'],
+            'xss_8': ['protocol', 'handler', 'data', 'uri'],
+            'xss_9': ['polyglot', 'context', 'multiple', 'vector'],
+            'xss_10': ['css', 'injection', 'url', 'javascript', 'style']
         }
         
         concepts = xss_concepts.get(challenge_id, [])
