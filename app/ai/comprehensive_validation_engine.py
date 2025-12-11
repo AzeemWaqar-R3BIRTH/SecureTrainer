@@ -565,16 +565,12 @@ class ComprehensiveValidationEngine:
                 "mutation-based XSS"
             ],
             'xss_10': [
-                "CSS injection",
-                "url() function",
-                "javascript: protocol",
-                "CSS url javascript",
-                "executes JavaScript through CSS",
-                "style attribute injection",
-                "background url javascript",
-                "CSS url() accepts javascript protocol",
-                "style injection with javascript",
-                "exploits CSS url() function"
+                "content security policy",
+                "CSP",
+                "XSS prevention",
+                "CSP headers",
+                "nonce-based CSP",
+                "strict CSP"
             ],
             
             # Command Injection Challenges - EXACTLY from demo guide
@@ -922,21 +918,19 @@ class ComprehensiveValidationEngine:
         
         # List of generic/invalid answers that should always be rejected
         invalid_patterns = [
-            r'i\s*dont\s*know',  # Matches "i dont know" anywhere in answer
-            r'idk',  # Matches "idk" anywhere
-            r'i\s*dunno',  # Matches "i dunno" anywhere
-            r'no\s*idea',  # Matches "no idea" anywhere
-            r'not\s*sure',  # Matches "not sure" anywhere
-            r'dont\s*know',  # Matches "dont know" anywhere
-            r'^unknown$',  # Exact match for single word
+            r'^i\s*dont\s*know$',
+            r'^idk$',
+            r'^i\s*dunno$',
+            r'^no\s*idea$',
+            r'^not\s*sure$',
+            r'^dont\s*know$',
+            r'^unknown$',
             r'^nothing$',
             r'^none$',
             r'^na$',
             r'^n\s*a$',
-            r'help\s*me',  # Matches "help me" anywhere
-            r'^help$',  # Exact match for "help" alone
-            r'i\s*need\s*help',
-            r'please\s*help',  # Matches "please help" anywhere
+            r'^help$',
+            r'^i\s*need\s*help$',
             r'^what$',
             r'^huh$',
             r'^confused$',
@@ -946,9 +940,6 @@ class ComprehensiveValidationEngine:
             r'^test$',
             r'^testing$',
             r'^random$',
-            r'^incorrect$',  # Reject literal "incorrect"
-            r'^wrong$',  # Reject literal "wrong"
-            r'^false$',  # Reject literal "false"
             r'^asdf+$',
             r'^qwer+ty+$',
             r'^123+$',
@@ -1071,6 +1062,12 @@ class ComprehensiveValidationEngine:
         }
         
         concepts = sql_concepts.get(challenge_id, [])
+        
+        # CRITICAL FIX: If no concepts defined for this challenge, reject
+        if not concepts or len(concepts) == 0:
+            logger.info(f"  No domain concepts defined for {challenge_id}, skipping domain validation")
+            return ValidationResult(is_correct=False, confidence=0.0, tier_used=ValidationTier.DOMAIN_VALIDATION, feedback="", processing_time=0.0)
+        
         concept_matches = sum(1 for concept in concepts if concept in normalized_answer)
         
         # Calculate word count for additional validation
@@ -1102,20 +1099,24 @@ class ComprehensiveValidationEngine:
         xss_concepts = {
             'xss_1': ['javascript', 'execute', 'alert', 'script'],
             'xss_2': ['event', 'handler', 'onerror', 'image'],
-            'xss_3': ['svg', 'onload', 'filter', 'bypass'],
-            'xss_4': ['dom', 'manipulation', 'innerhtml', 'injection'],
-            'xss_5': ['context', 'escape', 'attribute', 'injection'],
-            'xss_6': ['template', 'injection', 'angular', 'expression'],
-            'xss_7': ['mutation', 'parser', 'browser', 'parsing'],
-            'xss_8': ['protocol', 'handler', 'data', 'uri'],
-            'xss_9': ['polyglot', 'context', 'multiple', 'vector'],
-            'xss_10': ['css', 'injection', 'url', 'javascript', 'style']
+            'xss_3': ['svg', 'onload', 'filter', 'bypass']
         }
         
         concepts = xss_concepts.get(challenge_id, [])
+        
+        # CRITICAL FIX: If no concepts defined for this challenge, reject
+        if not concepts or len(concepts) == 0:
+            logger.info(f"  No domain concepts defined for {challenge_id}, skipping domain validation")
+            return ValidationResult(is_correct=False, confidence=0.0, tier_used=ValidationTier.DOMAIN_VALIDATION, feedback="", processing_time=0.0)
+        
         concept_matches = sum(1 for concept in concepts if concept in normalized_answer)
         
-        if concept_matches >= len(concepts) * 0.5:
+        # Calculate word count for additional validation
+        word_count = len(normalized_answer.split())
+        
+        # STRICTER: Require at least 75% concept coverage AND minimum 2 words
+        min_concepts_required = max(2, int(len(concepts) * 0.75))
+        if concept_matches >= min_concepts_required and word_count >= 2:
             best_match = max(expected_answers, key=lambda x: SequenceMatcher(None, normalized_answer, self._normalize_answer(x)).ratio())
             return ValidationResult(
                 is_correct=True,
@@ -1137,9 +1138,20 @@ class ComprehensiveValidationEngine:
         }
         
         concepts = cmd_concepts.get(challenge_id, [])
+        
+        # CRITICAL FIX: If no concepts defined for this challenge, reject
+        if not concepts or len(concepts) == 0:
+            logger.info(f"  No domain concepts defined for {challenge_id}, skipping domain validation")
+            return ValidationResult(is_correct=False, confidence=0.0, tier_used=ValidationTier.DOMAIN_VALIDATION, feedback="", processing_time=0.0)
+        
         concept_matches = sum(1 for concept in concepts if concept in normalized_answer)
         
-        if concept_matches >= len(concepts) * 0.5:
+        # Calculate word count for additional validation
+        word_count = len(normalized_answer.split())
+        
+        # STRICTER: Require at least 75% concept coverage AND minimum 2 words
+        min_concepts_required = max(2, int(len(concepts) * 0.75))
+        if concept_matches >= min_concepts_required and word_count >= 2:
             best_match = max(expected_answers, key=lambda x: SequenceMatcher(None, normalized_answer, self._normalize_answer(x)).ratio())
             return ValidationResult(
                 is_correct=True,
@@ -1154,39 +1166,28 @@ class ComprehensiveValidationEngine:
     
     def _validate_auth_domain(self, normalized_answer: str, expected_answers: List[str], challenge_id: str) -> ValidationResult:
         """Authentication-specific domain validation"""
-        # CRITICAL: Minimum word count requirement
-        word_count = len(normalized_answer.split())
-        if word_count < 2:
-            logger.info(f"  Answer too short for domain validation: {word_count} words")
-            return ValidationResult(is_correct=False, confidence=0.0, tier_used=ValidationTier.DOMAIN_VALIDATION, feedback="", processing_time=0.0)
-        
         auth_concepts = {
             'auth_1': ['password', 'weak', 'common', 'default'],
             'auth_2': ['brute', 'force', 'attack', 'guess'],
             'auth_3': ['token', 'reset', 'predictable', 'weak'],
-            'auth_4': ['session', 'hijack', 'fixation', 'steal'],
-            'auth_5': ['jwt', 'token', 'secret', 'signature', 'verify'],
-            'auth_6': ['oauth', 'redirect', 'uri', 'callback', 'authorization'],
-            'auth_7': ['security', 'questions', 'answers', 'predictable', 'social', 'engineering'],
-            'auth_8': ['biometric', 'bypass', 'fingerprint', 'face', 'recognition'],
-            'auth_9': ['multi', 'factor', 'authentication', 'mfa', '2fa', 'otp'],
-            'auth_10': ['captcha', 'bypass', 'bot', 'automation', 'detection']
+            'auth_4': ['session', 'hijack', 'fixation', 'steal']
         }
         
         concepts = auth_concepts.get(challenge_id, [])
         
         # CRITICAL FIX: If no concepts defined for this challenge, reject
-        if not concepts:
-            logger.warning(f"  No domain concepts defined for {challenge_id}")
+        if not concepts or len(concepts) == 0:
+            logger.info(f"  No domain concepts defined for {challenge_id}, skipping domain validation")
             return ValidationResult(is_correct=False, confidence=0.0, tier_used=ValidationTier.DOMAIN_VALIDATION, feedback="", processing_time=0.0)
         
         concept_matches = sum(1 for concept in concepts if concept in normalized_answer)
-        coverage = concept_matches / len(concepts) if concepts else 0
         
-        logger.info(f"  Domain concept coverage: {concept_matches}/{len(concepts)} ({coverage*100:.0f}%)")
+        # Calculate word count for additional validation
+        word_count = len(normalized_answer.split())
         
-        # INCREASED threshold from 50% to 85% for stricter validation
-        if concept_matches >= len(concepts) * 0.85 and concept_matches >= 2:
+        # STRICTER: Require at least 75% concept coverage AND minimum 2 words
+        min_concepts_required = max(2, int(len(concepts) * 0.75))
+        if concept_matches >= min_concepts_required and word_count >= 2:
             best_match = max(expected_answers, key=lambda x: SequenceMatcher(None, normalized_answer, self._normalize_answer(x)).ratio())
             return ValidationResult(
                 is_correct=True,

@@ -167,47 +167,63 @@ class QRCodeManager:
             from pyzbar import pyzbar
             from PIL import Image
             
-            print(f"🔍 Processing image file: {image_file.filename}")
+            # Handle both FileStorage objects and file paths
+            filename = getattr(image_file, 'filename', 'uploaded_image')
+            print(f"🔍 Processing image file: {filename}")
             print(f"🔍 Image file type: {type(image_file)}")
             
-            # Reset file pointer to beginning
-            image_file.seek(0)
+            # Reset file pointer to beginning for FileStorage objects
+            if hasattr(image_file, 'seek'):
+                image_file.seek(0)
             
             # Read the image using PIL
             try:
                 img_pil = Image.open(image_file)
-                print(f"🔍 PIL Image size: {img_pil.size}, mode: {img_pil.mode}")
+                print(f"🔍 PIL Image opened successfully: size={img_pil.size}, mode={img_pil.mode}")
             except Exception as e:
                 print(f"❌ PIL Image open error: {e}")
+                import traceback
+                traceback.print_exc()
                 return False, f"Cannot open image file: {str(e)}"
             
             # Convert to RGB if necessary
             if img_pil.mode != 'RGB':
+                print(f"🔍 Converting from {img_pil.mode} to RGB")
                 img_pil = img_pil.convert('RGB')
-                print(f"🔍 Converted to RGB")
             
             # Use pyzbar to decode QR codes
             try:
+                print("🔍 Starting pyzbar decoding...")
                 decoded_objects = pyzbar.decode(img_pil)
                 print(f"🔍 pyzbar found {len(decoded_objects)} QR codes")
                 
                 if decoded_objects:
                     qr_data_str = decoded_objects[0].data.decode('utf-8')
-                    print(f"🔍 QR data (first 100 chars): {qr_data_str[:100]}...")
+                    print(f"🔍 QR data decoded: {qr_data_str[:100]}...")
                     
                     # Validate the QR code data
-                    return self.validate_qr_code(qr_data_str)
+                    is_valid, result = self.validate_qr_code(qr_data_str)
+                    if is_valid:
+                        print(f"✅ QR code validation successful!")
+                    else:
+                        print(f"❌ QR code validation failed: {result}")
+                    return is_valid, result
                 else:
+                    print(f"❌ No QR code detected in image")
                     return False, "No QR code found in image. Please ensure the image contains a clear QR code."
                     
             except Exception as e:
                 print(f"❌ pyzbar decoding error: {e}")
+                import traceback
+                traceback.print_exc()
                 return False, f"Error decoding QR code with pyzbar: {str(e)}"
             
         except ImportError as e:
             print(f"❌ Import error: {e}")
+            import traceback
+            traceback.print_exc()
             if 'pyzbar' in str(e):
-                return False, "QR code scanning library not available. Please contact support."
+                return False, "QR code scanning library not available. Please ensure pyzbar is installed."
             else:
                 return False, f"Required library not available: {str(e)}"
         except Exception as e:

@@ -56,14 +56,10 @@ backups/
 .DS_Store
 Thumbs.db
 
-# Model artifacts (large files) - DISABLED to deploy models to Render
-# model/*.pkl
-# model/*.joblib
-# model/*.h5
-
-# Only ignore model backups
-model/backups/
-scripts/model/backups/
+# Model artifacts (large files)
+model/*.pkl
+model/*.joblib
+model/*.h5
 
 # CSV data with sensitive info
 analytics.csv

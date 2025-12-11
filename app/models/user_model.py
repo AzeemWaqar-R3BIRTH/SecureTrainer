@@ -225,9 +225,8 @@ def update_user_comprehensive(user_id, score_delta, challenge_data=None):
             {'$set': update_data}
         )
         
-        # Check for achievements (DISABLED - function not implemented)
-        # TODO: Implement check_and_award_achievements function
-        # check_and_award_achievements(user_id, new_score, new_level)
+        # Check for achievements
+        check_and_award_achievements(user_id, new_score, new_level)
         
         return True
     except Exception as e:

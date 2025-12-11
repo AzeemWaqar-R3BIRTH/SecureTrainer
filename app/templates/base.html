@@ -91,14 +91,21 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-blue-800 text-white py-6">
-        <div class="container mx-auto px-6 text-center">
-            <div class="flex items-center justify-center mb-2">
-                <i class="fas fa-shield-alt text-xl mr-2"></i>
-                <span class="text-lg font-bold">SecureTrainer</span>
+    <footer class="bg-gradient-to-br from-gray-900 to-black border-t border-green-900/30 text-white py-8">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <i class="fas fa-shield-alt text-2xl text-green-500 mr-3"></i>
+                    <div>
+                        <span class="text-xl font-bold text-white">SecureTrainer</span>
+                        <p class="text-green-400 text-sm">Cybersecurity Awareness Training Platform</p>
+                    </div>
+                </div>
+                <div class="text-center md:text-right">
+                    <p class="text-gray-400 text-sm">&copy; 2025 SecureTrainer. All rights reserved.</p>
+                    <p class="text-gray-500 text-xs mt-1">Powered by AI-driven adaptive learning</p>
+                </div>
             </div>
-            <p class="text-blue-200">&copy; 2025 SecureTrainer. All rights reserved.</p>
-            <p class="text-blue-300 text-sm mt-1">Cybersecurity Awareness Training Platform</p>
         </div>
     </footer>
 

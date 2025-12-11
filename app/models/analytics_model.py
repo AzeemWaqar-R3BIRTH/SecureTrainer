@@ -374,44 +374,29 @@ def get_dashboard_analytics(user_id):
         stats = category_performance[category]
         stats['success_rate'] = int((stats['correct'] / stats['total']) * 100) if stats['total'] > 0 else 0
     
-    # Get ALL attempts sorted by time for cumulative score progression
-    all_attempts_sorted = sorted(
-        [a for a in attempts if a.get('is_correct')], 
-        key=lambda x: x.get('attempt_time', datetime.now())
-    )
+    # Get recent scores for chart (last 30 days)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    recent_attempts = [a for a in attempts if a['attempt_time'] >= thirty_days_ago and a['is_correct']]
     
-    # Build cumulative score over time
-    if len(all_attempts_sorted) > 0:
-        # Calculate cumulative scores from the beginning
-        cumulative_data = []
-        running_score = 0
-        
-        for attempt in all_attempts_sorted:
-            running_score += attempt.get('score_earned', 0)
-            cumulative_data.append({
-                'date': attempt.get('attempt_time', datetime.now()),
-                'score': running_score
-            })
-        
-        # Take last 30 data points (or less if fewer attempts)
-        chart_data = cumulative_data[-30:] if len(cumulative_data) > 30 else cumulative_data
-        
-        # If we have fewer than 10 points, pad with earlier zero point
-        if len(chart_data) < 10 and len(chart_data) > 0:
-            first_date = chart_data[0]['date']
-            # Add a starting point 30 days before first attempt
-            chart_data.insert(0, {
-                'date': first_date - timedelta(days=30),
-                'score': 0
-            })
-        
-        # Extract labels and scores
-        chart_labels = [point['date'].strftime('%m/%d') for point in chart_data]
-        chart_scores = [point['score'] for point in chart_data]
-    else:
-        # No attempts yet - show empty chart
-        chart_labels = [(datetime.now() - timedelta(days=i)).strftime('%m/%d') for i in range(29, -1, -1)]
-        chart_scores = [0] * 30
+    # Group by day for chart
+    daily_scores = {}
+    for attempt in recent_attempts:
+        date_key = attempt['attempt_time'].strftime('%Y-%m-%d')
+        if date_key not in daily_scores:
+            daily_scores[date_key] = 0
+        daily_scores[date_key] += attempt.get('score_earned', 10)
+    
+    # Fill missing days with 0 and prepare chart data
+    chart_labels = []
+    chart_scores = []
+    cumulative_score = score - sum(daily_scores.values())  # Starting score
+    
+    for i in range(30):
+        date = thirty_days_ago + timedelta(days=i)
+        date_key = date.strftime('%Y-%m-%d')
+        chart_labels.append(date.strftime('%m/%d'))
+        cumulative_score += daily_scores.get(date_key, 0)
+        chart_scores.append(cumulative_score)
     
     # Get achievements
     achievements = user.get('achievements', [])
@@ -461,7 +446,7 @@ def get_dashboard_analytics(user_id):
         'category_performance': category_performance,
         'chart_labels': chart_labels,
         'chart_scores': chart_scores,
-        'recent_scores': [{'date': chart_data[i]['date'], 'score': chart_data[i]['score']} for i in range(0, min(len(chart_data), 30), max(1, len(chart_data) // 5))] if len(all_attempts_sorted) > 0 else [],
+        'recent_scores': [{'date': thirty_days_ago + timedelta(days=i), 'score': chart_scores[i]} for i in range(0, 30, 7)],
         'recommended_topics': recommended_topics,
         'daily_tip': daily_tip,
         'improvement_percentage': improvement_percentage
