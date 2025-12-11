@@ -12,5 +12,5 @@ joblib==1.4.2
 scikit-learn==1.5.2
 pandas==2.2.3
 numpy==2.0.2
-opencv-python-headless==4.8.0.76
+opencv-python-headless==4.10.0.84
 Werkzeug==2.3.7
