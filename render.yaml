@@ -3,7 +3,7 @@ services:
     name: securetrainer
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: apt-get update && apt-get install -y libzbar0 && pip install -r requirements.txt
     startCommand: gunicorn securetrainer:app
     envVars:
       - key: PYTHON_VERSION
